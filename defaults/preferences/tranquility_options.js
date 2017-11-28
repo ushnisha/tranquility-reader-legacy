@@ -1,0 +1,13 @@
+pref("extensions.tranquility.useBackgroundImage", true);
+pref("extensions.tranquility.firstrun", true);
+pref("extensions.tranquility.defaultFont", "Times");
+pref("extensions.tranquility.defaultFontSize", 18);
+pref("extensions.tranquility.defaultWidthPctg", 70);
+pref("extensions.tranquility.tranquilBrowsingMode", true);
+pref("extensions.tranquility.backgroundColor", "#FDFDFD");
+pref("extensions.tranquility.useDefaultBackgroundColor", true);
+pref("extensions.tranquility.fontColor", "#000000");
+pref("extensions.tranquility.useDefaultFontColor", true);
+pref("extensions.tranquility.enableSingleKeyMode", false);
+pref("extensions.tranquility.wikiLanguage", "en");
+pref("extensions.tranquility.pruningStrategy", "Conservative");

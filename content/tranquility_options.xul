@@ -1,0 +1,218 @@
+<?xml version="1.0"?>
+<?xml-stylesheet href="chrome://global/skin/global.css"  type="text/css"?>
+<!DOCTYPE window SYSTEM "chrome://tranquility/locale/tranquility.dtd">
+
+<prefwindow xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" 
+        id="tranquility-prefs-window"
+        title="&title.label;">
+
+  <prefpane id="tranquility-pane-1" label="&prefs-pane-1.label;">
+
+    <preferences>
+      <preference id="tranquility-background-image-pref"
+                  name="extensions.tranquility.useBackgroundImage"
+                  type="bool"/>
+      <preference id="tranquility-default-font-pref"
+                  name="extensions.tranquility.defaultFont"
+                  type="string"/>
+      <preference id="tranquility-default-fontsize-pref"
+                  name="extensions.tranquility.defaultFontSize"
+                  type="int"/>
+      <preference id="tranquility-default-width-pref"
+                  name="extensions.tranquility.defaultWidthPctg"
+                  type="int"/>
+      <preference id="tranquility-tranquilbrowsingmode-pref"
+                  name="extensions.tranquility.tranquilBrowsingMode"
+                  type="bool"/>
+      <preference id="tranquility-enablesinglekeymode-pref"
+                  name="extensions.tranquility.enableSingleKeyMode"
+                  type="bool"/>
+      <preference id="tranquility-background-color-pref"
+                  name="extensions.tranquility.backgroundColor"
+                  type="string"/>
+      <preference id="tranquility-use-default-background-color-pref"
+                  name="extensions.tranquility.useDefaultBackgroundColor"
+                  type="bool"/>
+      <preference id="tranquility-font-color-pref"
+                  name="extensions.tranquility.fontColor"
+                  type="string"/>
+      <preference id="tranquility-use-default-font-color-pref"
+                  name="extensions.tranquility.useDefaultFontColor"
+                  type="bool"/>
+      <preference id="tranquility-wiki-language-pref"
+                  name="extensions.tranquility.wikiLanguage"
+                  type="string"/>
+      <preference id="tranquility-pruning-strategy-pref"
+                  name="extensions.tranquility.pruningStrategy"
+                  type="string"/>
+    </preferences>
+ 
+    <groupbox>
+      <caption label="&tranquility.background.colors.label;" />
+      <vbox>
+        <checkbox id="tranquility-image-checkbox" 
+                  preference="tranquility-background-image-pref" 
+                  label="&backgroundimg.label;"/>
+        <checkbox id="tranquility-use-default-background-color-checkbox" 
+                  preference="tranquility-use-default-background-color-pref" 
+                  label="&tranquility.defaultBackgroundColor.label;"/>
+        <checkbox id="tranquility-use-default-font-color-checkbox" 
+                  preference="tranquility-use-default-font-color-pref" 
+                  label="&tranquility.defaultFontColor.label;"/>
+        <grid>
+          <columns>
+            <column flex="1" />
+            <column />
+          </columns>
+          <rows>
+            <row align="center">
+              <label value="&tranquility.backgroundColor.label;" />
+              <colorpicker type="button" id="tranquility-background-color-button" 
+                       preference="tranquility-background-color-pref" flex="1" />
+            </row>
+            <row align="center">
+              <label value="&tranquility.fontColor.label;" />
+              <colorpicker type="button" id="tranquility-font-color-button" 
+                       preference="tranquility-font-color-pref" flex="1" />
+            </row>
+          </rows>
+        </grid>
+      </vbox>
+    </groupbox>
+    <separator class="groove"/>
+    <groupbox>
+      <caption label="&tranquility.fonts.label;" />
+      <vbox>
+        <grid>
+          <columns>
+            <column flex="1" />
+            <column />
+          </columns>
+          <rows>
+            <row align="center">
+              <label value="&tranquility.fontName.label;" />
+              <menulist id="tranquility-default-font-menulist" preference="tranquility-default-font-pref">
+                 <menupopup id="tranquility-default-font-menupopup">
+                 </menupopup>
+            </menulist>
+            </row>
+            <row align="center">
+              <label value="&tranquility.fontSize.label;" />
+              <menulist id="tranquility-default-fontsize-menulist" preference="tranquility-default-fontsize-pref">
+                 <menupopup id="tranquility-default-fontsize-menupopup">
+                 </menupopup>
+            </menulist>
+            </row>
+          </rows>
+        </grid>
+      </vbox>
+    </groupbox>
+    <separator class="groove"/>
+    <groupbox>
+      <caption label="&tranquility.extras.label;" />
+      <vbox>
+        <checkbox id="tranquility-tranquilbrowsingmode-checkbox" 
+                  preference="tranquility-tranquilbrowsingmode-pref" 
+                  label="&tranquility.tranquilBrowsingMode.label;"/>
+        <checkbox id="tranquility-enablesinglekeymode-checkbox" 
+                  preference="tranquility-enablesinglekeymode-pref" 
+                  label="&tranquility.enableSingleKeyMode.label;"/>
+        <grid>
+          <columns>
+            <column flex="1" />
+            <column />
+          </columns>
+          <rows>
+            <row align="center">
+              <label value="&tranquility.defaultwidth.label;" />
+              <textbox type="number" id="tranquility-default-width-textbox" 
+                       preference="tranquility-default-width-pref" min="1" max="100" flex="1" />
+            </row>
+            <row align="center">
+              <label value="&tranquility.wikiLanguage.label;" />
+              <menulist id="tranquility-wiki-language-menulist" preference="tranquility-wiki-language-pref">
+                 <menupopup id="tranquility-wiki-language-menupopup">
+                 </menupopup>
+            </menulist>
+            </row>
+            <row align="center">
+              <label value="&tranquility.pruningStrategy.label;" />
+              <menulist id="tranquility-pruning-strategy-menulist" preference="tranquility-pruning-strategy-pref">
+                 <menupopup id="tranquility-pruning-strategy-menupopup">
+                   <menuitem label="&tranquility.conservativePruningStrategy.label;" value="Conservative" />
+                   <menuitem label="&tranquility.moderatePruningStrategy.label;" value="Moderate" />
+                   <menuitem label="&tranquility.aggressivePruningStrategy.label;" value="Aggressive" />
+                 </menupopup>
+            </menulist>
+            </row>
+          </rows>
+        </grid>
+      </vbox>
+    </groupbox>
+
+  </prefpane>
+ 
+  <script><![CDATA[
+
+    var prefs = Components.classes["@mozilla.org/preferences-service;1"]
+                 .getService(Components.interfaces.nsIPrefService)
+                 .getBranch("extensions.tranquility.");
+
+    // Add system fonts to preferences
+    var enumerator = Components.classes["@mozilla.org/gfx/fontenumerator;1"]
+                      .getService(Components.interfaces.nsIFontEnumerator);
+    var fonts = enumerator.EnumerateAllFonts({});
+    var fontlist = document.getElementById("tranquility-default-font-menulist");
+    var fontpopup = document.getElementById("tranquility-default-font-menupopup");
+    var fontsizelist = document.getElementById("tranquility-default-fontsize-menulist");
+    var fontsizepopup = document.getElementById("tranquility-default-fontsize-menupopup");
+    var wikilanglist = document.getElementById("tranquility-wiki-language-menulist");
+    var wikilangpopup = document.getElementById("tranquility-wiki-language-menupopup");
+
+    for(var i=0; i < fonts.length; i++) {
+        var mitem = document.createElement("menuitem");
+        mitem.setAttribute("label", fonts[i]);
+        mitem.setAttribute("value", fonts[i]);
+        fontpopup.appendChild(mitem);
+        if(prefs.getCharPref("defaultFont") == fonts[i]) {
+           fontlist.selectedItem = mitem;
+        }
+    }
+
+    for(var i=10; i < 65; i=i+2) {
+        var mitem = document.createElement("menuitem");
+        mitem.setAttribute("label", i);
+        mitem.setAttribute("value", i);
+        fontsizepopup.appendChild(mitem);
+        if(prefs.getIntPref("defaultFontSize") == i) {
+           fontsizelist.selectedItem = mitem;
+        }
+    }
+    
+    var wikiLanguages = { "English":"en",  "Simple English":"simple",
+                          "العربية":"ar", "Bahasa Indonesia":"id",
+                          "Bahasa Melayu":"ms", "Български":"bg", "Català":"ca", 
+                          "Česky":"cs", "Dansk":"da", "Deutsch":"de", "Eesti":"et",
+                          "Ελληνικά":"el", "Español":"es", "Esperanto":"eo", "Euskara":"eu",
+                          "فارسی":"fa", "Français":"fr", "Galego":"gl", "한국어":"ko",
+                          "עברית":"he", "Hrvatski":"hr", "Italiano":"it", "Lietuvių":"lt",
+                          "Magyar":"hu", "Nederlands":"nl", "日本語":"ja", 
+                          "Norsk (bokmål)‬":"no", "Norsk (nynorsk)‬":"nn",
+                          "Polski":"pl", "Português":"pt", "Română":"ro", "Русский":"ru",
+                          "Slovenčina":"sk", "Slovenščina":"sl", "Српски / Srpski":"sr",
+                          "Srpskohrvatski / Српскохрватски":"sh", "Suomi":"fi",
+                          "Svenska":"sv", "ไทย":"th", "Tiếng Việt":"vi", "Türkçe":"tr",
+                          "Українська":"uk", "中文":"zh" };
+    for(var lang in wikiLanguages) {
+        var mitem = document.createElement("menuitem");
+        mitem.setAttribute("label", lang);
+        mitem.setAttribute("value", wikiLanguages[lang]);
+        wikilangpopup.appendChild(mitem);
+        if(prefs.getCharPref("wikiLanguage") == wikiLanguages[lang]) {
+           wikilanglist.selectedItem = mitem;
+        }
+    }
+
+  ]]></script>
+
+</prefwindow>
