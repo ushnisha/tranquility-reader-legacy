@@ -3,7 +3,8 @@ body.tranquility
   background-image:url('tranquility.jpg');
   font-family:Univers,Scala,Georgia,Verdana,Times,Helvetica; 
   font-size:18px;
-  text-align:justify; 
+  text-align:justify;
+  line-height:140%;  
   /* height: 100%; */
 }
 
@@ -12,6 +13,7 @@ body.tranquility-no-image
   font-family:Univers,Scala,Georgia,Verdana,Times,Helvetica; 
   font-size:18px;
   text-align:justify; 
+  line-height:140%;  
 }
 
 div.tranquility_masker
@@ -35,6 +37,7 @@ div.tranquility_container
   font-family:Univers,Scala,Georgia,Verdana,Times,Helvetica; 
   font-size:18px;
   text-align:justify; 
+  line-height:140%;  
   border-radius: 20px;
 }
 
@@ -47,6 +50,7 @@ div.tranquility_innercontainer
   font-family:Univers,Scala,Georgia,Verdana,Times,Helvetica; 
   font-size:18px;
   text-align:justify; 
+  line-height:140%;  
   border-left: solid 5px silver;
   border-top: solid 2px silver;
   border-bottom: solid 2px silver;
@@ -59,6 +63,7 @@ div.tranquility
   font-family:Univers,Scala,Georgia,Verdana,Times,Helvetica; 
   font-size:18px;
   text-align:justify; 
+  line-height:140%;  
   border-bottom: solid 1px silver;
   padding-bottom: 1px;
 } 
@@ -72,6 +77,7 @@ div.tranquility_links
   font-family:Univers,Scala,Georgia,Verdana,Times,Helvetica; 
   font-size:18px;
   text-align:left; 
+  line-height:140%;  
   border-left: solid 5px silver;
   border-top: solid 5px silver;
   border-bottom: solid 5px silver;
@@ -98,6 +104,7 @@ div.tranquility_nav_links
   font-family:Univers,Scala,Georgia,Verdana,Times,Helvetica; 
   font-size:18px;
   text-align:right; 
+  line-height:140%;  
   border-left: solid 2px silver;
   border-top: solid 2px silver;
   border-bottom: solid 2px silver;
@@ -112,6 +119,7 @@ span.tranquility
   font-family:Univers,Scala,Georgia,Verdana,Times,Helvetica; 
   font-size:18px;
   text-align:justify; 
+  line-height:140%;  
 } 
 
 table.tranquility 
@@ -119,6 +127,7 @@ table.tranquility
   font-family:Univers,Scala,Georgia,Verdana,Times,Helvetica; 
   font-size:18px;
   text-align:justify; 
+  line-height:140%;  
 } 
 
 p.tranquility 
@@ -126,6 +135,7 @@ p.tranquility
   font-family:Univers,Scala,Georgia,Verdana,Times,Helvetica; 
   font-size:18px;
   text-align:justify; 
+  line-height:140%;  
 } 
 
 pre.tranquility
@@ -134,6 +144,7 @@ pre.tranquility
   font-size:18px;
   width: 100%;
   overflow: auto;
+  line-height:140%;  
 }
 
 li.tranquility 
@@ -141,6 +152,7 @@ li.tranquility
   font-family:Univers,Scala,Georgia,Verdana,Times,Helvetica; 
   font-size:18px;
   text-align:justify; 
+  line-height:140%;  
 } 
 
 font.tranquility 
@@ -148,6 +160,7 @@ font.tranquility
   font-family:Univers,Scala,Georgia,Verdana,Times,Helvetica;
   font-size:18px;
   text-align:justify; 
+  line-height:140%;  
 } 
 
 iframe.tranquility_dictionary
@@ -155,6 +168,7 @@ iframe.tranquility_dictionary
   font-family:Univers,Scala,Georgia,Verdana,Times,Helvetica; 
   font-size:18px;
   text-align:justify; 
+  line-height:140%;  
   border-left: solid 5px silver;
   border-top: solid 5px silver;
   border-bottom: solid 5px silver;
@@ -184,5 +198,5 @@ div.tranquility_more_links
   border-radius: 5px;
   z-index: 9999998;
   position: fixed;
-  -moz-transform: translate(40px) rotate(-90deg);
+  transform: translate(40px) rotate(-90deg);
 }

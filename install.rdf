@@ -5,7 +5,7 @@
    
     <em:id>tranquility@ushnisha.com</em:id>
     <em:name>Tranquility</em:name>
-    <em:version>1.1.2-signed</em:version>
+    <em:version>1.1.3</em:version>
     <em:type>2</em:type>
     <em:description>Makes a Web Page readable.</em:description>
     <em:creator>Arun Kunchithapatham</em:creator>
@@ -17,8 +17,8 @@
     <em:targetApplication>
       <Description>
         <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
-        <em:minVersion>5.0</em:minVersion>
-        <em:maxVersion>12.*</em:maxVersion>
+        <em:minVersion>16.0</em:minVersion>
+        <em:maxVersion>27.*</em:maxVersion>
       </Description>
     </em:targetApplication>
 

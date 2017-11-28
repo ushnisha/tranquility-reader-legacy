@@ -11,6 +11,8 @@
 <!ENTITY tranquility.defaultBackgroundColor.label "Use Default Background Color">
 <!ENTITY tranquility.fontColor.label "Font Color:">
 <!ENTITY tranquility.defaultFontColor.label "Use Default Font Color">
+<!ENTITY tranquility.linkColor.label "Link Color:">
+<!ENTITY tranquility.defaultLinkColor.label "Use Default Link Color">
 <!ENTITY tranquility.tranquilBrowsingMode.label "Enable Tranquil Browsing">
 <!ENTITY tranquility.enableSingleKeyMode.label "Enable Single Key Shortcut (PAUSE/BREAK)">
 <!ENTITY tranquility.wikiLanguage.label "Wikipedia Language: ">
@@ -29,6 +31,11 @@
 <!ENTITY tranquility.fontName "font name">
 <!ENTITY tranquility.fontSize "font size">
 <!ENTITY tranquility.defaultwidth.label "Reading Width:">
+<!ENTITY tranquility.defaultlineheight.label "Line Height:">
+<!ENTITY tranquility.defaultalign.label "Text Align:">
+<!ENTITY tranquility.alignLeft.label "Left">
+<!ENTITY tranquility.alignJustify.label "Justify">
+<!ENTITY tranquility.alignRight.label "Right">
 <!ENTITY tranquility.dictionary "Tranquility Wiktionary">
 <!ENTITY tranquility.wikipedia "Tranquility Wikipedia">
 <!ENTITY tranquility.autoScroll.label "Enable Auto-Scrolling">

@@ -1,6 +1,6 @@
 /*
  *  Tranquility is a FireFox extension that makes web articles readable.
- *  Copyright (C) 2012 Arun Kunchithapatham
+ *  Copyright (C) 2012-2014 Arun Kunchithapatham
  *
  *  This file is part of Tranquility.
  *
@@ -72,9 +72,10 @@ var Tranquility = {
     // As per AMO review suggestion, using Services.prefs since 
     // Components.utils.import("resource://gre/modules/Services.jsm")
     // is imported by default
-    // 
+    // Moved from nsIPrefBranch2 to nsIPrefBranch in 1.1.13 as per compatibility report
+    //
     this.prefs = Services.prefs.getBranch("extensions.tranquility.");
-    this.prefs.QueryInterface(Components.interfaces.nsIPrefBranch2);
+    this.prefs.QueryInterface(Components.interfaces.nsIPrefBranch);
     this.prefs.addObserver("", this, false);
 
     if(this.prefs.getBoolPref("firstrun")) {
@@ -464,11 +465,17 @@ var Tranquility = {
       contentDoc.body.addEventListener("click", Tranquility.handleClickEvent, false);
 
       // Move the other divs into cdiv
+      // Code modified from version 1.1.12 to take care of a corner case where the 
+      // tranquility version had all <p> elements in reverse order
       var bchildren = contentDoc.body.childNodes;
-      for(var i=bchildren.length -1; i > -1; i--) {
+      for(var i=0; i<bchildren.length; i++) {
           if((bchildren[i].id !== 'tranquility_container') && 
              (bchildren[i].id !== 'tranquility_innercontainer')) {
              cdiv_inner.appendChild(bchildren[i]);
+             // decrement count since we have moved element i from the body to cdiv_inner
+             // otherwise, we will only add alternate elements
+             i--;
+ 
           }
       }
 
@@ -555,10 +562,42 @@ var Tranquility = {
           }
       }   
 
+      // Apply linkColor preference
+      var elems = contentDoc.documentElement.getElementsByTagName("a");
+      for(var i=0; i < elems.length; i++) {
+          if(this.prefs.getBoolPref("useDefaultLinkColor")) {
+             elems[i].style.color = "#0000FF";
+          }
+          else {
+             elems[i].style.color = this.prefs.getCharPref("linkColor");
+          }
+      }   
+
       // Update the width based on the preference setting
       // Do this for the images also
       cdiv.style.width = this.prefs.getIntPref("defaultWidthPctg") + "%"; 
       Tranquility.resizeImages(contentDoc);
+
+      // Apply text justification
+      var elems = contentDoc.documentElement.getElementsByTagName("*");
+      for(var i=0; i < elems.length; i++) {
+          if((elems[i].getAttribute('class')) && 
+             (elems[i].getAttribute('class').substr(0,11) === 'tranquility') &&
+             (elems[i].getAttribute('class') !== 'tranquility_links') &&
+             (elems[i].getAttribute('class') !== 'tranquility_nav_links') &&
+             (elems[i].getAttribute('class') !== 'tranquility_more_links')) {
+                elems[i].style.textAlign = this.prefs.getCharPref("defaultAlign");
+          }
+      }   
+
+      // Apply line height preferences
+      var elems = contentDoc.documentElement.getElementsByTagName("*");
+      for(var i=0; i < elems.length; i++) {
+          if((elems[i].getAttribute('class')) && 
+             (elems[i].getAttribute('class').substr(0,11) === 'tranquility')) {
+                elems[i].style.lineHeight = this.prefs.getIntPref("defaultLineHeightPctg") + "%";
+          }
+      }   
       
       // Remove target attribute from all anchor elements when TranquilBrowsingMode is enabled
       // this will enable opening the link in the same browser tab
@@ -662,11 +701,12 @@ var Tranquility = {
       while (target.hasChildNodes()) {
            target.removeChild(target.lastChild);
       }
-            
-      var fragment = Components.classes["@mozilla.org/feed-unescapehtml;1"]  
-              .getService(Components.interfaces.nsIScriptableUnescapeHTML)  
-              .parseFragment(cdoc, false, null, target);  
 
+      // Moved from nsIScriptableUnescapeHTML to nSIParserUtils as per compatibility issues in 1.1.13
+      var fragment = Components.classes["@mozilla.org/parserutils;1"]
+              .getService(Components.interfaces.nsIParserUtils)
+              .parseFragment(cdoc, 0, false, null, target);
+            
       target.appendChild(fragment);   
       var success = Tranquility.processDocument(newTabBrowser, 'PRINT');
       // If the print mode failed to find sufficient content, return false
@@ -1277,6 +1317,25 @@ var Tranquility = {
                cdiv.style.width = this.prefs.getIntPref("defaultWidthPctg") + "%"; 
                Tranquility.resizeImages(cdoc);
            }
+           else if(aData == "defaultAlign") {
+               for(var i=0; i < elems.length; i++) {
+                   if((elems[i].getAttribute('class')) && 
+                      (elems[i].getAttribute('class').substr(0,11) === 'tranquility') &&
+                      (elems[i].getAttribute('class') !== 'tranquility_links') &&
+                      (elems[i].getAttribute('class') !== 'tranquility_nav_links') &&
+                      (elems[i].getAttribute('class') !== 'tranquility_more_links')) {
+                         elems[i].style.textAlign = this.prefs.getCharPref("defaultAlign");
+                   }
+               }
+           }               
+           else if(aData == "defaultLineHeightPctg") {
+               for(var i=0; i < elems.length; i++) {
+                   if((elems[i].getAttribute('class')) && 
+                      (elems[i].getAttribute('class').substr(0,11) === 'tranquility')) {
+                       elems[i].style.lineHeight = this.prefs.getIntPref("defaultLineHeightPctg") + "%";
+                   }
+               }   
+           }
            else if((aData == "backgroundColor") || (aData == "useDefaultBackgroundColor")) {
                if(aData == "backgroundColor") { 
                   this.prefs.setBoolPref("useDefaultBackgroundColor", false);
@@ -1309,6 +1368,21 @@ var Tranquility = {
                       }
                       else {
                          elems[i].style.color = newFontColor;
+                      }
+                   }
+               }   
+           }
+           else if((aData == "linkColor") || (aData == "useDefaultLinkColor")) {
+               if(aData == "linkColor")
+                  this.prefs.setBoolPref("useDefaultLinkColor", false);
+               var newLinkColor = this.prefs.getCharPref("linkColor");
+               for(var i=0; i < elems.length; i++) {
+                   if(elems[i].tagName == 'A') { 
+                      if(this.prefs.getBoolPref("useDefaultLinkColor")) {
+                         elems[i].style.color = "#0000FF";
+                      }
+                      else {
+                         elems[i].style.color = newLinkColor;
                       }
                    }
                }   

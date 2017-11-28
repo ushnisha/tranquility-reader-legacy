@@ -21,6 +21,12 @@
       <preference id="tranquility-default-width-pref"
                   name="extensions.tranquility.defaultWidthPctg"
                   type="int"/>
+      <preference id="tranquility-default-lineheight-pref"
+                  name="extensions.tranquility.defaultLineHeightPctg"
+                  type="int"/>
+      <preference id="tranquility-default-align-pref"
+                  name="extensions.tranquility.defaultAlign"
+                  type="string"/>
       <preference id="tranquility-tranquilbrowsingmode-pref"
                   name="extensions.tranquility.tranquilBrowsingMode"
                   type="bool"/>
@@ -38,6 +44,12 @@
                   type="string"/>
       <preference id="tranquility-use-default-font-color-pref"
                   name="extensions.tranquility.useDefaultFontColor"
+                  type="bool"/>
+      <preference id="tranquility-link-color-pref"
+                  name="extensions.tranquility.linkColor"
+                  type="string"/>
+      <preference id="tranquility-use-default-link-color-pref"
+                  name="extensions.tranquility.useDefaultLinkColor"
                   type="bool"/>
       <preference id="tranquility-wiki-language-pref"
                   name="extensions.tranquility.wikiLanguage"
@@ -74,6 +86,11 @@
               <label value="&tranquility.fontColor.label;" />
               <colorpicker type="button" id="tranquility-font-color-button" 
                        preference="tranquility-font-color-pref" flex="1" />
+            </row>
+            <row align="center">
+              <label value="&tranquility.linkColor.label;" />
+              <colorpicker type="button" id="tranquility-link-color-button" 
+                       preference="tranquility-link-color-pref" flex="1" />
             </row>
           </rows>
         </grid>
@@ -126,7 +143,22 @@
             <row align="center">
               <label value="&tranquility.defaultwidth.label;" />
               <textbox type="number" id="tranquility-default-width-textbox" 
-                       preference="tranquility-default-width-pref" min="1" max="100" flex="1" />
+                       preference="tranquility-default-width-pref" min="1" max="90" flex="1" />
+            </row>
+            <row align="center">
+              <label value="&tranquility.defaultlineheight.label;" />
+              <textbox type="number" id="tranquility-default-lineheight-textbox" 
+                       preference="tranquility-default-lineheight-pref" min="100" max="200" increment="10" flex="1" />
+            </row>
+            <row align="center">
+              <label value="&tranquility.defaultalign.label;" />
+              <menulist id="tranquility-default-align-menulist" preference="tranquility-default-align-pref"> 
+                 <menupopup id="tranquility-default-align-menupopup">
+                   <menuitem label="&tranquility.alignLeft.label;" value="left" />
+                   <menuitem label="&tranquility.alignJustify.label;" value="justify" />
+                   <menuitem label="&tranquility.alignRight.label;" value="right" />
+                 </menupopup>
+            </menulist>
             </row>
             <row align="center">
               <label value="&tranquility.wikiLanguage.label;" />

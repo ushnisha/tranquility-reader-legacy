@@ -1,3 +1,17 @@
+## Version 1.1.3:
+
+### Minor enhancements:
+
+* Support for customization of link color, line width, text-justification.
+
+### Bug fixes:
+
+* Code modified from version 1.1.2 to take care of a corner case where 
+  the tranquility version reversed the display order of all the 
+  paragraphs in the web page. 
+
+--------------------------
+
 ## Version 1.1.2:
 
 * Non-English users can now select the Wikipedia language of choice 
