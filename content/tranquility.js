@@ -51,7 +51,7 @@ var Tranquility = {
   gNavLinks: [],
   gDOMLoaded: [],
   prefs: null,
-
+  
   onLoad: function() {
     
     // initialization code
@@ -93,7 +93,7 @@ var Tranquility = {
           document.persist(navbar.id, "currentset");
        }
     }
-    
+      
     // Enable or disable the single/key mode based on the option value
     if(this.prefs.getBoolPref("enableSingleKeyMode"))
        document.getElementById("tranquility-single-key").setAttribute('disabled', 'false');
@@ -374,6 +374,7 @@ var Tranquility = {
       
       // Try to remove unnecessary nested DIV's
       // They mess up the padding and margins; use only in moderate pruning
+      // They mess up the padding and margins; use only in moderate pruning
       // if the threshold is < 0.99999
       for(var i=0; i < 5; i++) {
         Tranquility.replaceParent(contentDoc, "DIV",  0.99999);
@@ -498,8 +499,8 @@ var Tranquility = {
       // Provide "more links" functionality
       //
       var links_button_div = contentDoc.createElement('div');
-      links_button_div.setAttribute('class', 'tranquility_more_links');
-      links_button_div.setAttribute('id', 'tranquility_more_links');
+      links_button_div.setAttribute('class', 'tranquility_more_links_btn');
+      links_button_div.setAttribute('id', 'tranquility_more_links_btn');
       links_button_div.textContent = "More Links";
       links_button_div.addEventListener("click", Tranquility.handleClickEvent, false);
       contentDoc.body.appendChild(links_button_div);
@@ -515,6 +516,30 @@ var Tranquility = {
       links_div.style.visibility = 'hidden';
       contentDoc.body.appendChild(links_div);
 
+      // Allow saving offline content (add "Read Later" button)
+      //
+      var readlater_button_div = contentDoc.createElement('div');
+      readlater_button_div.setAttribute('class', 'tranquility_read_later_btn');
+      readlater_button_div.setAttribute('id', 'tranquility_read_later_btn');
+      readlater_button_div.textContent = "Read Later";
+      readlater_button_div.addEventListener("click", Tranquility.handleClickEvent, false);
+      contentDoc.body.appendChild(readlater_button_div);
+
+      // Provide "Offline links" functionality
+      //
+      var offline_button_div = contentDoc.createElement('div');
+      offline_button_div.setAttribute('class', 'tranquility_offline_links_btn');
+      offline_button_div.setAttribute('id', 'tranquility_offline_links_btn');
+      offline_button_div.textContent = "Offline Links";
+      offline_button_div.addEventListener("click", Tranquility.handleClickEvent, false);
+      contentDoc.body.appendChild(offline_button_div);
+
+      var offline_links_div = contentDoc.createElement('div');
+      offline_links_div.setAttribute('class', 'tranquility_offline_links');
+      offline_links_div.setAttribute('id', 'tranquility_offline_links');
+      offline_links_div.style.visibility = 'hidden';
+      contentDoc.body.appendChild(offline_links_div);
+      
       // Apply background image preference
       if(this.prefs.getBoolPref("useBackgroundImage")) {
          contentDoc.body.setAttribute('class', 'tranquility');
@@ -585,7 +610,9 @@ var Tranquility = {
              (elems[i].getAttribute('class').substr(0,11) === 'tranquility') &&
              (elems[i].getAttribute('class') !== 'tranquility_links') &&
              (elems[i].getAttribute('class') !== 'tranquility_nav_links') &&
-             (elems[i].getAttribute('class') !== 'tranquility_more_links')) {
+             (elems[i].getAttribute('class') !== 'tranquility_more_links_btn') &&
+             (elems[i].getAttribute('class') !== 'tranquility_offline_links_btn') &&
+             (elems[i].getAttribute('class') !== 'tranquility_read_later_btn')) {
                 elems[i].style.textAlign = this.prefs.getCharPref("defaultAlign");
           }
       }   
@@ -753,13 +780,38 @@ var Tranquility = {
 
   handleClickEvent: function(event) {
 
-    //alert(event.target.tagName);
     var newTabBrowser = gBrowser.getBrowserForTab(gBrowser.selectedTab);
     var contentDoc = newTabBrowser.contentDocument;
     var urlStr = Tranquility.getAnchorNode(event.target);
 
+    // Process clicking on the "Read Later" button
+    if(event.target.id == 'tranquility_read_later_btn') {
+       // Open the indexedDB and add link and content to the db for offline reading
+       var thisURL = newTabBrowser.currentURI.spec;
+       Tranquility.saveContentOffline(thisURL);
+       event.stopPropagation();
+    }
+    // Process clicking on the "Offline Links" button
+    else if(event.target.id == 'tranquility_offline_links_btn') {
+       var target = contentDoc.getElementById('tranquility_offline_links');
+       var masker = contentDoc.getElementById('tranquility_masker');
+       if(target != undefined) {
+          if(target.style.visibility == 'hidden') {
+             target.style.visibility = 'visible';
+             masker.style.visibility = 'visible';
+             event.stopPropagation();
+             Tranquility.displayOfflineFiles();
+             return;
+          }
+          if(target.style.visibility == 'visible') {
+             target.style.visibility = 'hidden';
+             masker.style.visibility = 'hidden';
+          }
+       }
+       event.stopPropagation();
+    } 
     // Process clicking on the "More Links" button
-    if(event.target.id == 'tranquility_more_links') {
+    else if(event.target.id == 'tranquility_more_links_btn') {
        var target = contentDoc.getElementById('tranquility_links');
        var masker = contentDoc.getElementById('tranquility_masker');
        if(target != undefined) {
@@ -779,11 +831,21 @@ var Tranquility = {
     // if clicked inside the iframe, then don't hide it; stop bubbling back to body
     else if(event.target.id == 'tranquility_dictionary')  {
          Tranquility.hideLinksDiv(contentDoc);  
+         Tranquility.hideOffineLinksDiv(contentDoc);  
          event.stopPropagation();
+    }
+    else if((urlStr != undefined) && (event.target.className == 'tranquility_offline_link')) {
+         event.preventDefault();
+         event.stopPropagation();
+         Tranquility.loadDocFromDB(urlStr);
+    }
+    else if((urlStr != undefined) && (event.target.className == 'tranquility_delete_offline_link')) {
+         event.preventDefault();
+         event.stopPropagation();
+         Tranquility.delDocFromDB(urlStr);
     }
     else if((urlStr != undefined) && Tranquility.prefs.getBoolPref("tranquilBrowsingMode"))  {
          var url = urlStr;
-
          // If in the Tranquil Browsing mode, we do not want to process document references
          // on the same web page; Example: "Continue Reading" or "Comment" style # tags
          // Stop tranquility from trying to process these links; default behavior is desired
@@ -831,8 +893,13 @@ var Tranquility = {
     }
     else {
          if((contentDoc.getElementById('tranquility_links') != undefined) &&
-             (contentDoc.getElementById('tranquility_links').style.visibility == 'visible'))
+             (contentDoc.getElementById('tranquility_links').style.visibility == 'visible')) {
             Tranquility.hideLinksDiv(contentDoc);  
+         }
+         else if((contentDoc.getElementById('tranquility_offline_links') != undefined) &&
+             (contentDoc.getElementById('tranquility_offline_links').style.visibility == 'visible')) {
+            Tranquility.hideOfflineLinksDiv(contentDoc);  
+         }
          else
             Tranquility.hideDictionaryView(contentDoc);
     }
@@ -851,10 +918,28 @@ var Tranquility = {
      }
      return urlString;
   },
- 
+  
   hideLinksDiv: function(cdoc) {
 
      var target = cdoc.getElementById('tranquility_links');
+     var masker = cdoc.getElementById('tranquility_masker');
+     var dictfr = cdoc.getElementById('tranquility_dictionary');
+     if(target != undefined) { 
+       target.style.visibility = 'hidden';
+       if((dictfr != undefined) && (dictfr.style.visibility == 'visible')) {
+          // iframe is visible; so do not hide the masker
+          // do nothing
+       }
+       else { 
+          // Either iframe is not defined or it is hidden; so hide masker
+          masker.style.visibility = 'hidden';
+       }
+     }
+  },
+
+    hideOfflineLinksDiv: function(cdoc) {
+
+     var target = cdoc.getElementById('tranquility_offline_links');
      var masker = cdoc.getElementById('tranquility_masker');
      var dictfr = cdoc.getElementById('tranquility_dictionary');
      if(target != undefined) { 
@@ -901,7 +986,6 @@ var Tranquility = {
   processXMLHTTPRequest: function(tBrowser, url, callback) {
 
       var oXHR = new XMLHttpRequest();
-
       oXHR.onreadystatechange = function() {
           if(oXHR.readyState === 4) {
              if(oXHR.status === 200) {
@@ -1323,7 +1407,9 @@ var Tranquility = {
                       (elems[i].getAttribute('class').substr(0,11) === 'tranquility') &&
                       (elems[i].getAttribute('class') !== 'tranquility_links') &&
                       (elems[i].getAttribute('class') !== 'tranquility_nav_links') &&
-                      (elems[i].getAttribute('class') !== 'tranquility_more_links')) {
+                      (elems[i].getAttribute('class') !== 'tranquility_more_links_btn') &&
+                      (elems[i].getAttribute('class') !== 'tranquility_offline_links_btn') &&
+                      (elems[i].getAttribute('class') !== 'tranquility_read_later_btn')) {
                          elems[i].style.textAlign = this.prefs.getCharPref("defaultAlign");
                    }
                }
@@ -1433,16 +1519,269 @@ var Tranquility = {
      } 
   },
 
+  readLater: function(newTabBrowser) {
+  
+     var thisURL = newTabBrowser.currentURI.spec;
+     var contentDoc = newTabBrowser.contentDocument;
+     // If in tranquility view, then simply save content in DB
+     if(contentDoc.getElementById('tranquility_container')) {
+       Tranquility.saveContentOffline(thisURL);
+     }
+     // Else, get tranqulity view of content, save it offline
+     else {
+       Tranquility.onToolBarOrKeyboard(newTabBrowser, null);
+       Tranquility.saveContentOffline(thisURL);
+     }
+  },
+  
+  saveContentOffline: function(thisURL) {
+
+    var db;   
+    var request = indexedDB.open("Tranquility_Offline_Content", 1);
+
+    var strBundle = document.getElementById("tranquility-string-bundle");
+    var dbOpenErrorString = strBundle.getString('dbOpenErrorString');
+    var duplicateURLErrorString = strBundle.getString('duplicateURLErrorString');
+
+    // Handle first time (database creation)
+    request.onupgradeneeded = function(event) {    
+      var db = event.target.result;
+      var objectStore = db.createObjectStore("offline_content", {keyPath: "url"});
+    };
+
+    // Handle errors
+    request.onerror = function(event) {
+      alert(dbOpenErrorString + event.target.errorCode);
+    };
+
+    // Handle success
+    request.onsuccess = function(event) {
+      var db = request.result;
+      var transaction = db.transaction(["offline_content"], "readwrite");
+      var offline_docStore = transaction.objectStore("offline_content");
+      var cdoc = Tranquility.gTranquilDoc[thisURL].cloneNode(true);
+      var doctitle = cdoc.title;
+      if(doctitle == undefined) {
+        doctitle = thisURL;
+      }
+      var indata = {url: null, title: null, contentDoc: null};
+      indata.url = thisURL;
+      indata.title = doctitle;
+      var s = new XMLSerializer();
+      indata.contentDoc = s.serializeToString(cdoc); 
+      var req = offline_docStore.add(indata); 
+      req.onsuccess = function(event) {
+      };
+      req.onerror = function(event) {
+        alert(duplicateURLErrorString);
+      };      
+    };
+  },
+
+  displayOfflineFiles: function() {
+   
+    var newTabBrowser = gBrowser.getBrowserForTab(gBrowser.selectedTab);
+    var contentDoc = newTabBrowser.contentDocument;
+
+    var strBundle = document.getElementById("tranquility-string-bundle");
+    var dbOpenErrorString = strBundle.getString('dbOpenErrorString');
+
+    var links_div = contentDoc.getElementById('tranquility_offline_links');
+    
+    // If div exists, delete and recreate children from IndexedDB
+    if(links_div) {
+       while( links_div.hasChildNodes() ){
+         links_div.removeChild(links_div.lastChild);
+       }
+    }
+    // Else create the div afresh
+    else {
+      var hlink = contentDoc.createElement('link');
+      hlink.setAttribute('href', 'resource://tranquility/tranquility.css');
+      hlink.setAttribute('rel',  'stylesheet');
+      hlink.setAttribute('type', 'text/css');
+      var heads = contentDoc.getElementsByTagName('head');
+      for(var i=0; i < heads.length; i++) {
+          heads[i].appendChild(hlink);
+      }
+
+      var links_div = contentDoc.createElement("div");
+      links_div.setAttribute('id', 'tranquility_offline_links');
+      links_div.setAttribute('class', 'tranquility_offline_links');
+      contentDoc.body.appendChild(links_div);
+      links_div.addEventListener("click", Tranquility.handleClickEvent, false);
+    }
+    
+    var s = new XMLSerializer();
+    var str = s.serializeToString(contentDoc); 
+    
+    var db;
+    var request = indexedDB.open("Tranquility_Offline_Content", 1);
+
+    // Handle first time (database creation)
+    request.onupgradeneeded = function(event) {    
+      var db = event.target.result;
+      var objectStore = db.createObjectStore("offline_content", {keyPath: "url"});
+    };
+
+    // Handle errors
+    request.onerror = function(event) {
+      alert(dbOpenErrorString + event.target.errorCode);
+    };
+
+    // Handle success
+    request.onsuccess = function(event) {
+      var db = request.result;
+      // Iterate through all objects in the database
+      var transaction = db.transaction(["offline_content"], "readonly");
+      var offline_docStore = transaction.objectStore("offline_content");
+
+      offline_docStore.openCursor().onsuccess = function(evt) {
+          var cursor = evt.target.result;
+          if (cursor) {
+              var p_elem = contentDoc.createElement('p');
+              p_elem.setAttribute('class', 'tranquility_offline_link');
+              p_elem.setAttribute('id', cursor.key);
+              
+              var del_img = contentDoc.createElement('img');
+              del_img.setAttribute('class', 'tranquility_delete_offline_link');
+              del_img.href = cursor.key;
+              del_img.src = "resource://tranquility-icons/delete_icon.png";
+              del_img.setAttribute('height', '20px');
+              del_img.setAttribute('width', '20px');
+              
+              var del_a_elem = contentDoc.createElement('a');
+              del_a_elem.setAttribute('class', 'tranquility_delete_offline_link');
+              del_a_elem.href = cursor.key;
+              del_a_elem.appendChild(del_img.cloneNode(true));
+              p_elem.appendChild(del_a_elem.cloneNode(true));
+
+              var a_elem = contentDoc.createElement('a');
+              a_elem.setAttribute('class', 'tranquility_offline_link');
+              a_elem.textContent = "  " + cursor.value.title;
+              a_elem.href = cursor.key;
+              p_elem.appendChild(a_elem.cloneNode(true));
+              var links_div = contentDoc.getElementById('tranquility_offline_links');
+              links_div.appendChild(p_elem.cloneNode(true));
+              cursor.continue();
+          }
+          else {
+              var links_div = contentDoc.getElementById('tranquility_offline_links');
+              links_div.style.visibility = 'visible';
+          }
+      };
+
+    };
+  },
+  
+  loadDocFromDB: function(thisURL) {
+
+    var newTabBrowser = gBrowser.getBrowserForTab(gBrowser.selectedTab);
+    var contentDoc = newTabBrowser.contentDocument;
+
+    var strBundle = document.getElementById("tranquility-string-bundle");
+    var dbOpenErrorString = strBundle.getString('dbOpenErrorString');
+    var urlNotFoundErrorString = strBundle.getString('urlNotFoundErrorString');
+
+    var db;
+    var request = indexedDB.open("Tranquility_Offline_Content", 1);
+
+    // Handle first time (database creation)
+    request.onupgradeneeded = function(event) {    
+      var db = event.target.result;
+      var objectStore = db.createObjectStore("offline_content", {keyPath: "url"});
+    };
+
+    // Handle errors
+    request.onerror = function(event) {
+      alert(dbOpenErrorString + event.target.errorCode);
+    };
+
+    // Handle success
+    request.onsuccess = function(event) {
+      var db = request.result;
+      // Retreive data for the input url
+      var transaction = db.transaction(["offline_content"], "readonly");
+      var offline_docStore = transaction.objectStore("offline_content");
+
+      var req = offline_docStore.get(thisURL);
+      req.onerror = function(e) {
+        // Handle errors!
+        alert(urlNotFoundErrorString + thisURL);
+      };
+      req.onsuccess = function(e) {
+        // Do something with the request.result!
+        var parser = new DOMParser();
+        var doc = parser.parseFromString(req.result.contentDoc, "text/xml");
+        contentDoc.replaceChild(doc.documentElement, contentDoc.documentElement);
+        Tranquility.addBackEventListeners(contentDoc);
+      };      
+    };
+  },
+  
+  delDocFromDB: function(thisURL) {
+
+    var newTabBrowser = gBrowser.getBrowserForTab(gBrowser.selectedTab);
+    var contentDoc = newTabBrowser.contentDocument;
+
+    var strBundle = document.getElementById("tranquility-string-bundle");
+    var dbOpenErrorString = strBundle.getString('dbOpenErrorString');
+    var urlNotDeletedErrorString = strBundle.getString('urlNotDeletedErrorString');
+    
+    var db; 
+    var request = indexedDB.open("Tranquility_Offline_Content", 1);
+
+    // Handle first time (database creation)
+    request.onupgradeneeded = function(event) {    
+      var db = event.target.result;
+      var objectStore = db.createObjectStore("offline_content", {keyPath: "url"});
+    };
+
+    // Handle errors
+    request.onerror = function(event) {
+      alert(dbOpenErrorString + event.target.errorCode);
+    };
+
+    // Handle success
+    request.onsuccess = function(event) {
+      var db = request.result;
+      // Retreive data for the input url
+      var transaction = db.transaction(["offline_content"], "readwrite");
+      var offline_docStore = transaction.objectStore("offline_content");
+
+      var req = offline_docStore.delete(thisURL);
+      req.onerror = function(e) {
+        // Handle errors!
+        alert(urlNotDeletedErrorString + thisURL);
+      };
+      req.onsuccess = function(e) {
+        // Do something with the request.result!
+        var links_p = contentDoc.getElementById(thisURL);
+        links_p.parentNode.removeChild(links_p);
+      };      
+    };
+  },
+
   addBackEventListeners: function(cdoc) {
 
     // Add back click event listener to body 
     cdoc.body.addEventListener("click", Tranquility.handleClickEvent, false);
 
     // Add back click event listener to more links button
-    var links_button_div = cdoc.getElementById('tranquility_more_links');
+    var links_button_div = cdoc.getElementById('tranquility_more_links_btn');
     if(links_button_div != undefined)
        links_button_div.addEventListener("click", Tranquility.handleClickEvent, false);
  
+    // Add back click event listener to offline links button
+    var offlinefiles_button_div = cdoc.getElementById('tranquility_offline_links_btn');
+    if(offlinefiles_button_div != undefined)
+       offlinefiles_button_div.addEventListener("click", Tranquility.handleClickEvent, false);
+
+    // Add back click event listener to read later button
+    var readlater_button_div = cdoc.getElementById('tranquility_read_later_btn');
+    if(readlater_button_div != undefined)
+       readlater_button_div.addEventListener("click", Tranquility.handleClickEvent, false);
+       
     // Add back click event listener to dictionary iframe 
     var dict_frame = cdoc.getElementById('tranquility_dictionary');
     if(dict_frame != undefined)

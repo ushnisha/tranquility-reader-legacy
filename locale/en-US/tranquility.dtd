@@ -1,6 +1,8 @@
 <!ENTITY tranquility "Tranquility!">
 <!ENTITY tranquility.run "Run Tranquility!">
 <!ENTITY tranquility_prefs "Tranquility Preferences">
+<!ENTITY tranquility_readlater "Read Later">
+<!ENTITY tranquility_view_offline_files "View Offline Files">
 <!ENTITY prefs-pane-1.label "Tranquility Preferences">
 <!ENTITY title.label "Tranquility Preferences">
 <!ENTITY tranquility.background.colors.label "Background/Color Preferences">
@@ -43,3 +45,5 @@
 <!ENTITY tranquility.toolbarmenu.accesskey "T">
 <!ENTITY tranquility.toolbarmenu.runkey "T">
 <!ENTITY tranquility.toolbarmenu.prefskey "P">
+<!ENTITY tranquility.toolbarmenu.readlaterkey "A">
+<!ENTITY tranquility.toolbarmenu.viewofflinefileskey "A">

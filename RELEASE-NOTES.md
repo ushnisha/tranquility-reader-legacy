@@ -1,3 +1,17 @@
+## Version 1.1.4:
+
+* "Read Later" functionality to store tranquility view of pages for 
+  offline reading
+
+* Easy access to "Offline Links" view toolbar menu item or in the 
+  tranquility view.
+
+* Easy deletion of articles after reading them
+
+* Unclutter your bookmarks menu by saving them as offline pages
+
+--------------------------
+
 ## Version 1.1.3:
 
 ### Minor enhancements:

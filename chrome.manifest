@@ -8,3 +8,4 @@ style chrome://global/content/customizeToolbar.xul chrome://tranquility/skin/tra
 
 resource tranquility content/
 
+resource tranquility-icons skin/

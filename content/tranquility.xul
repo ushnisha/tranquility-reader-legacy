@@ -5,21 +5,6 @@
     xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
   <script src="tranquility.js" />
 
-  <menupopup id="menu_ToolsPopup">
-    <menu id="tranquility-toolbar-menu" label="&tranquility;" class="menu-iconic" 
-          image="chrome://tranquility/skin/tranquility_icon_small.png"
-          accesskey="&tranquility.toolbarmenu.accesskey;">
-      <menupopup>
-        <menuitem id="tranquility-toolbar-run" label="&tranquility.run;" class="menuitem-iconic" 
-                  accesskey="&tranquility.toolbarmenu.runkey;"
-                  oncommand="Tranquility.onToolBarOrKeyboard(gBrowser.getBrowserForTab(gBrowser.selectedTab), null);" />
-        <menuitem id="tranquility-toolbar-prefs" label="&tranquility_prefs;" class="menuitem-iconic"  
-                  accesskey="&tranquility.toolbarmenu.prefskey;"
-                  oncommand="Tranquility.openPreferences();" />
-      </menupopup>
-    </menu>
-  </menupopup>
-
   <keyset>
     <key id="tranquility-single-key" keycode="VK_PAUSE" 
          oncommand="Tranquility.onToolBarOrKeyboard(gBrowser.getBrowserForTab(gBrowser.selectedTab), 'VK_PAUSE');"/>
@@ -38,6 +23,12 @@
       <menupopup>
         <menuitem id="tranquility-toolbar-button-prefs" label="&tranquility_prefs;" class="menuitem-iconic"  
                   oncommand="event.stopPropagation(); Tranquility.openPreferences();" />
+        <menuitem id="tranquility-read-later" label="&tranquility_readlater;" class="menuitem-iconic"  
+                  accesskey="&tranquility.toolbarmenu.readlaterkey;"
+                  oncommand="event.stopPropagation(); Tranquility.readLater(gBrowser.getBrowserForTab(gBrowser.selectedTab));" />
+        <menuitem id="tranquility-view-offline-files" label="&tranquility_view_offline_files;" class="menuitem-iconic"  
+                  accesskey="&tranquility.toolbarmenu.viewofflinefileskey;"
+                  oncommand="event.stopPropagation(); Tranquility.displayOfflineFiles();" />
       </menupopup>
     </toolbarbutton>
   </toolbarpallete>
