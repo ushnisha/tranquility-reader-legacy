@@ -1930,11 +1930,71 @@ var Tranquility = {
                     Tranquility.applyFontPreferences(contentDoc);
                     var links_div = contentDoc.getElementById('tranquility_offline_links');
                     links_div.style.visibility = 'visible';
+                    Tranquility.createExportLink(newTabBrowser, contentDoc);
                 }
             };
         };
     },
   
+
+    createExportLink: function(newTabBrowser, contentDoc) {
+            
+        var strBundle = document.getElementById("tranquility-string-bundle");
+        var dbOpenErrorString = strBundle.getString('dbOpenErrorString');
+        
+        var export_dttm = new Date();
+        var export_content = { export_array: [],
+                               export_date: export_dttm
+                             };
+
+        var db;
+        var request = indexedDB.open("Tranquility_Offline_Content", 1);
+
+        // Handle first time (database creation)
+        request.onupgradeneeded = function(event) {    
+            var db = event.target.result;
+            var objectStore = db.createObjectStore("offline_content", {keyPath: "url"});
+        };
+
+        // Handle errors
+        request.onerror = function(event) {
+            alert(dbOpenErrorString + event.target.errorCode);
+        };
+
+        // Handle success
+        request.onsuccess = function(event) {
+            var db = request.result;
+            // Iterate through all objects in the database
+            var transaction = db.transaction(["offline_content"], "readonly");
+            var offline_docStore = transaction.objectStore("offline_content");
+
+            offline_docStore.openCursor().onsuccess = function(evt) {
+                var cursor = evt.target.result;
+                if (cursor) {
+                    export_content["export_array"].push({"url"        : cursor.key,
+                                                         "title"      : cursor.value.title,
+                                                         "contentDoc" : cursor.value.contentDoc,
+                                                         "dateCreated": export_dttm
+                    });
+                    cursor.continue();
+                }
+                else {
+                    var output_str = JSON.stringify(export_content);
+                    var dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(output_str);
+
+                    var export_link = contentDoc.createElement("a");
+                    export_link.setAttribute('class', 'tranquility_offline_content_export_link');
+                    export_link.setAttribute('href', dataUri);
+                    export_link.setAttribute('download', "tranquility_offline_content_export_data.json");
+                    export_link.textContent = "Right Click and 'Save Link As' to Export Offline Data!";
+                   
+                    var offline_links_div = contentDoc.getElementById('tranquility_offline_links');
+                    offline_links_div.insertBefore(export_link, offline_links_div.firstChild);
+                }
+            };
+        };
+    },
+ 
   
     loadDocFromDB: function(thisURL) {
 
@@ -2048,7 +2108,7 @@ var Tranquility = {
         }, 500);
 
     },
- 
+     
     addAnnotation: function(newTabBrowser) {
 
         var contentDoc = newTabBrowser.contentDocument;       

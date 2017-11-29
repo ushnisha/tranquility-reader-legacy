@@ -1,3 +1,13 @@
+## Version 2.0:
+
+* Ability to export/save their offline content to a JSON 
+  format file. 
+
+* A link for export is provided every time you view the 
+  list of urls stored offline (using the read later functionality).
+
+--------------------------
+
 ## Version 1.2:
 
 * Changed keyboard shortcut to show/hide menu div
