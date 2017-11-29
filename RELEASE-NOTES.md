@@ -1,3 +1,28 @@
+## Version 1.1.6:
+
+* Ability to add notes/annotations to offline content; Select a 
+  portion of the text and right click to get the context menu 
+  "Tranquility - Add Annotation" to add a new annotation.
+
+* The annotation is saved automatically and can be retrieved 
+  later. Selected text can be highlighted with a custom color.
+
+* A summary of all the annotations is available via the 
+  "View Notes" button. This is a convenient way to collate 
+  all notes and compile them for a report (or for later review).
+
+* Please note that at this time, annotations, once added, 
+  cannot be edited or deleted. Annotation font sizes are 
+  fixed and are not user customizable. 
+  These features will be added in a later version.
+
+* The layout of the tranquility mode has been streamlined 
+  and given a more minimal appearance. Buttons have been 
+  moved from the side to the top. The reading area border 
+  has been removed to improve readability.
+
+--------------------------
+
 ## Version 1.1.4:
 
 * "Read Later" functionality to store tranquility view of pages for 

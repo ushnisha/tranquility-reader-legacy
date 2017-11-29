@@ -12,6 +12,7 @@ pref("extensions.tranquility.fontColor", "#000000");
 pref("extensions.tranquility.useDefaultFontColor", true);
 pref("extensions.tranquility.linkColor", "#0000FF");
 pref("extensions.tranquility.useDefaultLinkColor", true);
+pref("extensions.tranquility.annotationHighlightColor", "#FFFF00");
 pref("extensions.tranquility.enableSingleKeyMode", false);
 pref("extensions.tranquility.wikiLanguage", "en");
 pref("extensions.tranquility.pruningStrategy", "Conservative");

@@ -43,7 +43,9 @@
     <menuitem id="tranquility-selection-rightclick-context-dictionary" label="&tranquility.dictionary;"
               oncommand="Tranquility.onSelectionRightClickContextMenu(gBrowser.getBrowserForTab(gBrowser.selectedTab), 'context-menu', 'dictionary');"
               insertbefore="context-viewsource"/>
-  </menupopup>
+    <menuitem id="tranquility-selection-rightclick-context-annotation" label="&tranquility.annotation;"
+              oncommand="Tranquility.onSelectionRightClickContextMenu(gBrowser.getBrowserForTab(gBrowser.selectedTab), 'context-menu', 'annotation');"
+              insertbefore="context-viewsource"/>  </menupopup>
 
   <stringbundleset id="stringbundleset">
      <stringbundle id="tranquility-string-bundle" src="chrome://tranquility/locale/tranquility.properties"/>

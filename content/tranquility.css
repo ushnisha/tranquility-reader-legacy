@@ -2,7 +2,6 @@ body.tranquility
 { 
   background-image:url('tranquility.jpg');
   font-family:Univers,Scala,Georgia,Verdana,Times,Helvetica; 
-  font-size:18px;
   text-align:justify;
   line-height:140%;  
   /* height: 100%; */
@@ -11,7 +10,6 @@ body.tranquility
 body.tranquility-no-image
 { 
   font-family:Univers,Scala,Georgia,Verdana,Times,Helvetica; 
-  font-size:18px;
   text-align:justify;
   line-height:140%;  
 }
@@ -24,7 +22,7 @@ div.tranquility_masker
   height:100%;
   background-color:silver;
   visibility: hidden;
-  z-index: 9999995;
+  z-index: 9999985;
   opacity:.7;
   position: fixed;
 }
@@ -32,13 +30,12 @@ div.tranquility_masker
 div.tranquility_container
 { 
   margin:0 auto; 
-  padding:10px; 
-  width:70%;  
+  padding:10px;
+  width:70%;
   font-family:Univers,Scala,Georgia,Verdana,Times,Helvetica; 
-  font-size:18px;
   text-align:justify;
   line-height:140%;  
-  border-radius: 20px;
+  /*border-radius: 20px;*/
 }
 
 div.tranquility_innercontainer 
@@ -48,20 +45,13 @@ div.tranquility_innercontainer
   padding-bottom: 10px;
   padding-right: 15px;
   font-family:Univers,Scala,Georgia,Verdana,Times,Helvetica; 
-  font-size:18px;
   text-align:justify;
   line-height:140%;  
-  border-left: solid 5px silver;
-  border-top: solid 2px silver;
-  border-bottom: solid 2px silver;
-  border-right: solid 5px silver;
-  border-radius: 15px;
 }  
 
 div.tranquility 
 {
   font-family:Univers,Scala,Georgia,Verdana,Times,Helvetica; 
-  font-size:18px;
   text-align:justify;
   line-height:140%;  
   border-bottom: solid 1px silver;
@@ -78,21 +68,20 @@ div.tranquility_links
   font-size:18px;
   text-align:left; 
   line-height:140%;  
-  border-left: solid 5px silver;
-  border-top: solid 5px silver;
-  border-bottom: solid 5px silver;
-  border-right: solid 5px silver;
-  border-radius: 20px;
-  top:10%;
-  right:0px;
-  width:30%;
-  height: 80%;
-  z-index: 9999999;
+  border-left: solid 2px silver;
+  border-top: solid 2px silver;
+  border-bottom: solid 2px silver;
+  border-right: solid 2px silver;
+  left: 30%;
+  width:40%;
+  top: 0px;
+  height: 98%;
+  z-index: 9999990;
   position: fixed;
   overflow-y: scroll;
   overflow-x: hidden;
   visibility: hidden;
-  background-color:#FFFFFF; 
+  background-color: #FFFFFF; 
 }  
 
 div.tranquility_offline_links
@@ -105,21 +94,20 @@ div.tranquility_offline_links
   font-size:18px;
   text-align:left; 
   line-height:140%;  
-  border-left: solid 5px silver;
-  border-top: solid 5px silver;
-  border-bottom: solid 5px silver;
-  border-right: solid 5px silver;
-  border-radius: 20px;
-  top:10%;
-  right:0px;
-  width:30%;
-  height: 80%;
-  z-index: 9999998;
+  border-left: solid 2px silver;
+  border-top: solid 2px silver;
+  border-bottom: solid 2px silver;
+  border-right: solid 2px silver;
+  left: 30%;
+  width:40%;
+  top: 0px;
+  height: 98%;
+  z-index: 9999990;
   position: fixed;
   overflow-y: scroll;
   overflow-x: hidden;
   visibility: hidden;
-  background-color:#FFFFFF; 
+  background-color: #FFFFFF; 
 }  
 
 div.tranquility_nav_links
@@ -129,7 +117,6 @@ div.tranquility_nav_links
   padding-bottom: 10px;
   padding-right: 15px;
   font-family:Univers,Scala,Georgia,Verdana,Times,Helvetica; 
-  font-size:18px;
   text-align:right; 
   line-height:140%;  
   border-left: solid 2px silver;
@@ -144,7 +131,6 @@ div.tranquility_nav_links
 span.tranquility 
 {
   font-family:Univers,Scala,Georgia,Verdana,Times,Helvetica; 
-  font-size:18px;
   text-align:justify;
   line-height:140%;  
 } 
@@ -152,7 +138,6 @@ span.tranquility
 table.tranquility 
 {
   font-family:Univers,Scala,Georgia,Verdana,Times,Helvetica; 
-  font-size:18px;
   text-align:justify;
   line-height:140%;  
 } 
@@ -160,7 +145,6 @@ table.tranquility
 p.tranquility 
 { 
   font-family:Univers,Scala,Georgia,Verdana,Times,Helvetica; 
-  font-size:18px;
   text-align:justify;
   line-height:140%;  
 } 
@@ -168,7 +152,6 @@ p.tranquility
 pre.tranquility
 {
   font-family:Univers,Scala,Georgia,Verdana,Times,Helvetica; 
-  font-size:18px;
   width: 100%;
   overflow: auto;
   line-height:140%;  
@@ -177,7 +160,6 @@ pre.tranquility
 li.tranquility 
 { 
   font-family:Univers,Scala,Georgia,Verdana,Times,Helvetica; 
-  font-size:18px;
   text-align:justify;
   line-height:140%;  
 } 
@@ -185,7 +167,6 @@ li.tranquility
 font.tranquility 
 { 
   font-family:Univers,Scala,Georgia,Verdana,Times,Helvetica;
-  font-size:18px;
   text-align:justify;
   line-height:140%;  
 } 
@@ -193,7 +174,6 @@ font.tranquility
 iframe.tranquility_dictionary
 {
   font-family:Univers,Scala,Georgia,Verdana,Times,Helvetica; 
-  font-size:18px;
   text-align:justify;
   line-height:140%;  
   border-left: solid 5px silver;
@@ -203,7 +183,7 @@ iframe.tranquility_dictionary
   border-radius: 15px;
   top:15%;
   height: 70%;
-  z-index: 9999997;
+  z-index: 9999990;
   position: fixed;
 }
 
@@ -211,61 +191,178 @@ div.tranquility_more_links_btn
 {
   font-family:Univers,Scala,Georgia,Verdana,Times,Helvetica; 
   font-size:20px;
-  top: 45%;
   width: 120px;
-  height: 40px;
-  right: -15px;
-  margin: 0;
-  padding: 0;
+  height: 30px;
+  z-index: 9999980;
+  border-left: solid 1px silver;
+  border-right: solid 1px silver;
+  border-radius: 20px;
   text-align: center;
-  border-left: solid 2px silver;
-  border-top: solid 2px silver;
-  border-bottom: solid 2px silver;
-  border-right: solid 2px silver;
-  border-radius: 5px;
-  z-index: 9999998;
-  position: fixed;
-  transform: translate(40px) rotate(-90deg);
+  float: left;
+  margin: 0 10px 10px 0;
 }
 
 div.tranquility_read_later_btn
 {
   font-family:Univers,Scala,Georgia,Verdana,Times,Helvetica; 
   font-size:20px;
-  top: 10%;
   width: 120px;
-  height: 40px;
-  right: -15px;
-  margin: 0;
-  padding: 0;
+  height: 30px;
+  z-index: 9999980;
+  border-left: solid 1px silver;
+  border-right: solid 1px silver;
+  border-radius: 20px;
   text-align: center;
-  border-left: solid 2px silver;
-  border-top: solid 2px silver;
-  border-bottom: solid 2px silver;
-  border-right: solid 2px silver;
-  border-radius: 5px;
-  z-index: 9999990;
-  position: fixed;
-  transform: translate(40px) rotate(-90deg);
+  float: left;
+  margin: 0 10px 10px 0;
 }
 
 div.tranquility_offline_links_btn
 {
   font-family:Univers,Scala,Georgia,Verdana,Times,Helvetica; 
   font-size:20px;
-  top: 80%;
-  width: 120px;
-  height: 40px;
-  right: -15px;
-  margin: 0;
-  padding: 0;
+  width: 150px;
+  height: 30px;
+  z-index: 9999980;
+  border-left: solid 1px silver;
+  border-right: solid 1px silver;
+  border-radius: 20px;
   text-align: center;
-  border-left: solid 2px silver;
-  border-top: solid 2px silver;
-  border-bottom: solid 2px silver;
-  border-right: solid 2px silver;
-  border-radius: 5px;
-  z-index: 9999998;
-  position: fixed;
-  transform: translate(40px) rotate(-90deg);
+  float: left;
+  margin: 0 10px 10px 0;
 }
+
+div.tranquility_viewnotes_btn
+{
+  font-family:Univers,Scala,Georgia,Verdana,Times,Helvetica; 
+  font-size:20px;
+  width: 120px;
+  height: 30px;
+  z-index: 9999980;
+  border-left: solid 1px silver;
+  border-right: solid 1px silver;
+  border-radius: 20px;
+  text-align: center;
+  float: left;
+  margin: 0 10px 10px 0;
+}
+
+div.tranquility_menu
+{
+  font-family:Univers,Scala,Georgia,Verdana,Times,Helvetica; 
+  border-bottom: solid 1px silver;
+  text-align:justify;
+  position: fixed;
+  top: 0px;
+  height: 50px; 
+  padding-top: 10px;
+}
+
+span.tranquility_annotation
+{
+  font-family:Univers,Scala,Georgia,Verdana,Times,Helvetica; 
+  font-size:18px;
+  text-align:justify;
+  line-height:140%;  
+  padding-bottom: 1px;
+}
+
+span.tranquility_annotation_selection
+{
+  font-family:Univers,Scala,Georgia,Verdana,Times,Helvetica; 
+  text-align:justify;
+  line-height:140%;  
+  padding-bottom: 1px;
+}
+
+p.tranquility_annotation_text
+{
+  display: none;
+  white-space: pre-wrap;
+}
+
+p.tranquility_annotation_note
+{
+  display: inline;
+  white-space: pre-wrap;
+}
+
+p.tranquility_view_notes
+{
+  display: inline;
+  white-space: pre-wrap;
+}
+
+div.tranquility_annotation_entry
+{
+  font-family:Univers,Scala,Georgia,Verdana,Times,Helvetica; 
+  text-align:center;
+  line-height:140%;  
+  border-left: solid 5px silver;
+  border-top: solid 5px silver;
+  border-bottom: solid 5px silver;
+  border-right: solid 5px silver;
+  border-radius: 15px;
+  top: 25%;
+  height: 50%;
+  z-index: 9999990;
+  position: fixed;
+  background-color:#FFFFFF; 
+}
+
+div.tranquility_annotation_note
+{
+  font-family:Univers,Scala,Georgia,Verdana,Times,Helvetica; 
+  text-align:justify;
+  line-height:140%;  
+  border-left: solid 5px silver;
+  border-top: solid 5px silver;
+  border-bottom: solid 5px silver;
+  border-right: solid 5px silver;
+  border-radius: 15px;
+  overflow-x: hidden;
+  overflow-y: scroll;
+  top: 30%;
+  height: 40%;
+  z-index: 9999990;
+  position: fixed;
+  visibility: hidden;
+  background-color:#FFFFFF; 
+}
+
+div.tranquility_view_notes
+{
+  font-family:Univers,Scala,Georgia,Verdana,Times,Helvetica; 
+  text-align:justify;
+  line-height:140%;  
+  border-left: solid 5px silver;
+  border-top: solid 5px silver;
+  border-bottom: solid 5px silver;
+  border-right: solid 5px silver;
+  border-radius: 15px;
+  overflow-x: hidden;
+  overflow-y: scroll;
+  top: 20%;
+  height: 60%;
+  z-index: 9999990;
+  position: fixed;
+  visibility: hidden;
+  background-color:#FFFFFF; 
+}
+
+div.tranquility_add_annotation
+{
+  font-family:Univers,Scala,Georgia,Verdana,Times,Helvetica; 
+  text-align:justify;
+  line-height:140%;  
+  border-left: solid 5px silver;
+  border-top: solid 5px silver;
+  border-bottom: solid 5px silver;
+  border-right: solid 5px silver;
+  border-radius: 15px;
+  top:25%;
+  height: 50%;
+  z-index: 9999990;
+  position: fixed;
+}
+

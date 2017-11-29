@@ -14,6 +14,7 @@
 <!ENTITY tranquility.fontColor.label "Font Color:">
 <!ENTITY tranquility.defaultFontColor.label "Use Default Font Color">
 <!ENTITY tranquility.linkColor.label "Link Color:">
+<!ENTITY tranquility.annotationHighlightColor.label "Annotation Highlight Color:">
 <!ENTITY tranquility.defaultLinkColor.label "Use Default Link Color">
 <!ENTITY tranquility.tranquilBrowsingMode.label "Enable Tranquil Browsing">
 <!ENTITY tranquility.enableSingleKeyMode.label "Enable Single Key Shortcut (PAUSE/BREAK)">
@@ -40,6 +41,7 @@
 <!ENTITY tranquility.alignRight.label "Right">
 <!ENTITY tranquility.dictionary "Tranquility Wiktionary">
 <!ENTITY tranquility.wikipedia "Tranquility Wikipedia">
+<!ENTITY tranquility.annotation "Tranquility - Add Annotation">
 <!ENTITY tranquility.autoScroll.label "Enable Auto-Scrolling">
 <!ENTITY tranquility.autoScrollSpeed.label "Auto-Scrolling pixels/min">
 <!ENTITY tranquility.toolbarmenu.accesskey "T">
@@ -47,3 +49,4 @@
 <!ENTITY tranquility.toolbarmenu.prefskey "P">
 <!ENTITY tranquility.toolbarmenu.readlaterkey "A">
 <!ENTITY tranquility.toolbarmenu.viewofflinefileskey "A">
+

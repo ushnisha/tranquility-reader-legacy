@@ -51,6 +51,9 @@
       <preference id="tranquility-use-default-link-color-pref"
                   name="extensions.tranquility.useDefaultLinkColor"
                   type="bool"/>
+      <preference id="tranquility-annotation-highlight-color-pref"
+                  name="extensions.tranquility.annotationHighlightColor"
+                  type="string"/>
       <preference id="tranquility-wiki-language-pref"
                   name="extensions.tranquility.wikiLanguage"
                   type="string"/>
@@ -91,6 +94,11 @@
               <label value="&tranquility.linkColor.label;" />
               <colorpicker type="button" id="tranquility-link-color-button" 
                        preference="tranquility-link-color-pref" flex="1" />
+            </row>
+            <row align="center">
+              <label value="&tranquility.annotationHighlightColor.label;" />
+              <colorpicker type="button" id="tranquility-annotation-highlight-color-button" 
+                       preference="tranquility-annotation-highlight-color-pref" flex="1" />
             </row>
           </rows>
         </grid>
