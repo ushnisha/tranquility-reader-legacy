@@ -1,3 +1,21 @@
+## Version 1.1.8:
+
+* Check private browsing mode and alert that "Read Later" 
+  functionality is not available.
+
+* Minor changes to menu show/hide logic. The menu is now 
+  almost completely hidden, and the expand menu button 
+  (+) is now moved to the top right of the browser window 
+  so that when printing the page, neither the menu nor 
+  the button obscure the text on the page.
+
+* Handle url's that point to text files better. Files 
+  that have only preformatted content were not being 
+  processed correctly (line breaks were being removed 
+  from the preformatted contents also).
+
+--------------------------
+
 ## Version 1.1.7:
 
 * Ability to edit annotations

@@ -156,6 +156,7 @@ pre.tranquility
   width: 100%;
   overflow: auto;
   line-height:140%;  
+  white-space: pre-wrap;
 }
 
 li.tranquility 
@@ -256,9 +257,10 @@ div.tranquility_expand_menu_btn
   height: 20px;
   z-index: 9999980;
   text-align: right;
-  float: right;
   padding-top: 20px;
+  position: fixed;
   top: 0px;
+  right: 20px;
 }
 
 div.tranquility_menu

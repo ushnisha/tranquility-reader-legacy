@@ -1,6 +1,6 @@
 /*
  *  Tranquility is a FireFox extension that makes web articles readable.
- *  Copyright (C) 2012-2014 Arun Kunchithapatham
+ *  Copyright (C) 2012-2015 Arun Kunchithapatham
  *
  *  This file is part of Tranquility.
  *
@@ -64,7 +64,7 @@ var Tranquility = {
         // when the pages referring to them are closed
         gBrowser.addTabsProgressListener(Tranquility_ProgressListener);
         gBrowser.tabContainer.addEventListener("TabClose", Tranquility.onTabClose, false);
-
+        
         // first run code
         // As per AMO review suggestion, using Services.prefs since 
         // Components.utils.import("resource://gre/modules/Services.jsm")
@@ -98,6 +98,29 @@ var Tranquility = {
            document.getElementById("tranquility-single-key").setAttribute('disabled', 'true');
 
         this.initialized = true;
+    },
+    
+    // Code added to cleanly support Private Browsing Mode
+    // When Private Browsing is enabled, do not support "Read Later" or 
+    // "Load Offline Links" pages which are stored in an IndexedDB database
+    inPrivateBrowsingMode: function() {
+        try {
+            // Firefox 20+
+            Components.utils.import("resource://gre/modules/PrivateBrowsingUtils.jsm");
+            return PrivateBrowsingUtils.isWindowPrivate(window); 
+        } catch(e) {
+            // pre Firefox 20
+            try {
+                var pbs = Components.classes["@mozilla.org/privatebrowsing;1"].
+                            getService(Components.interfaces.nsIPrivateBrowsingService);
+                return pbs.privateBrowsingEnabled;
+            } catch(e) {
+                // pre FireFox 3.5? And does not support private browsing?
+                // HOW?!! This addon does not support versions prior to Firefox 16!
+                Components.utils.reportError(e);
+                return false;
+            }
+        }
     },
 
     onLinkRightClickContextMenu: function(url) {
@@ -203,11 +226,7 @@ var Tranquility = {
                 var tdoc = Tranquility.gTranquilDoc[thisURL].cloneNode(true);
                 Tranquility.addBackEventListeners(tdoc);
                 contentDoc.replaceChild(tdoc.documentElement, contentDoc.documentElement );
-                // Need to call setTimeout to auto hide the menu bar if we toggle back and forth
-                // between the tranquility version and the original document.
-                setTimeout(function() {
-                    Tranquility.hideMenuDiv(contentDoc);
-                }, 10000);
+                Tranquility.hideMenuDiv(contentDoc);
                 return;
             }
             catch(err) {
@@ -293,7 +312,7 @@ var Tranquility = {
         var thisURL = newTabBrowser.currentURI.spec;
         var contentDoc = newTabBrowser.contentDocument;
         var continueProcessing = true;
-
+        
         // Remove unnecessary whitespaces and comments
         Tranquility.removeWhiteSpaceComments(contentDoc);
  
@@ -575,7 +594,7 @@ var Tranquility = {
         // And setTimeOut to hide the menu_div
         setTimeout(function() {
             Tranquility.hideMenuDiv(contentDoc);
-        }, 10000);
+        }, 1000);
         
         // Apply background image preference
         if(this.prefs.getBoolPref("useBackgroundImage")) {
@@ -818,29 +837,42 @@ var Tranquility = {
 
         // Process clicking on the "Read Later" button
         if(event.target.id == 'tranquility_read_later_btn') {
-            // Open the indexedDB and add link and content to the db for offline reading
-            var thisURL = newTabBrowser.currentURI.spec;
-            Tranquility.saveContentOffline(thisURL);
-            event.stopPropagation();
+            // Check to ensure that we are not in private browsing mode
+            if (Tranquility.inPrivateBrowsingMode()) {
+                alert("'Read Later' functionality is not supported in Private Browsing Mode");
+                event.stopPropagation();
+            }
+            else {
+                // Open the indexedDB and add link and content to the db for offline reading
+                var thisURL = newTabBrowser.currentURI.spec;
+                Tranquility.saveContentOffline(thisURL);
+                event.stopPropagation();
+            }
         }
         // Process clicking on the "Offline Links" button
         else if(event.target.id == 'tranquility_offline_links_btn') {
-            var target = contentDoc.getElementById('tranquility_offline_links');
-            var masker = contentDoc.getElementById('tranquility_masker');
-            if(target != undefined) {
-                if(target.style.visibility == 'hidden') {
-                    target.style.visibility = 'visible';
-                    masker.style.visibility = 'visible';
-                    event.stopPropagation();
-                    Tranquility.displayOfflineFiles();
-                    return;
-                }
-                if(target.style.visibility == 'visible') {
-                    target.style.visibility = 'hidden';
-                    masker.style.visibility = 'hidden';
-                }
+            if (Tranquility.inPrivateBrowsingMode()) {
+                alert("'Read Later' functionality is not supported in Private Browsing Mode");
+                event.stopPropagation();
             }
-            event.stopPropagation();
+            else {
+                var target = contentDoc.getElementById('tranquility_offline_links');
+                var masker = contentDoc.getElementById('tranquility_masker');
+                if(target != undefined) {
+                    if(target.style.visibility == 'hidden') {
+                        target.style.visibility = 'visible';
+                        masker.style.visibility = 'visible';
+                        event.stopPropagation();
+                        Tranquility.displayOfflineFiles();
+                        return;
+                    }
+                    if(target.style.visibility == 'visible') {
+                        target.style.visibility = 'hidden';
+                        masker.style.visibility = 'hidden';
+                    }
+                }
+                event.stopPropagation();
+            }
         } 
         // Process clicking on the "More Links" button
         else if(event.target.id == 'tranquility_more_links_btn') {
@@ -899,18 +931,7 @@ var Tranquility = {
         }
         // If clicked on the "expand menu div" button, then expand the menu div
         else if(event.target.id == 'tranquility_expand_menu_btn') {
-            var expand_btn = event.target;
-            var menu_div = expand_btn.parentNode;
-            menu_div.style.height = '50px';
-            menu_div.style.opacity = 1;
-            var menu_items = menu_div.childNodes;
-            for(var i=0; i < menu_items.length; i++) {
-                menu_items[i].style.visibility = 'visible';
-            };
-            menu_div.removeChild(expand_btn);
-            setTimeout(function() {
-                Tranquility.hideMenuDiv(contentDoc);
-            }, 10000);
+            Tranquility.showMenuDiv(contentDoc);
         }
         // if clicked inside the iframe, then don't hide it; stop bubbling back to body
         else if(event.target.id == 'tranquility_dictionary')  {
@@ -1096,6 +1117,39 @@ var Tranquility = {
     },
 
     
+    toggleMenuDisplay: function(newTabBrowser) {
+
+        var cdoc = newTabBrowser.contentDocument;
+        var expand_menu_btn = cdoc.getElementById('tranquility_expand_menu_btn');
+        if (expand_menu_btn != undefined) {
+            Tranquility.showMenuDiv(cdoc);
+        }
+        else {
+            Tranquility.hideMenuDiv(cdoc);
+        }
+    },
+    
+    
+    showMenuDiv: function(cdoc) {
+        var menu_div = cdoc.getElementById('tranquility_menu');
+        menu_div.style.height = '50px';
+        menu_div.style.opacity = 1;
+        var menu_items = menu_div.childNodes;
+        for(var i=0; i < menu_items.length; i++) {
+            menu_items[i].style.visibility = 'visible';
+        };
+
+        // Delete the expand menu button and trigger a hide of the menu 
+        // within 10 seconds
+        var expand_menu_btn = cdoc.getElementById('tranquility_expand_menu_btn');
+        expand_menu_btn.parentNode.removeChild(expand_menu_btn);
+        setTimeout(function() {
+            Tranquility.hideMenuDiv(cdoc);
+        }, 10000);
+
+    },
+    
+    
     hideMenuDiv: function(cdoc) {
 
         // This is the setTimeout function for hiding menu after loading a page
@@ -1106,19 +1160,18 @@ var Tranquility = {
         var menu_items = menu_div.childNodes;
         for(var i=0; i < menu_items.length; i++) {
             menu_items[i].style.visibility = 'hidden';
-            menu_items[i].style.visibility = 'hidden';
         }
-        menu_div.style.height = '10px';
-        menu_div.style.opacity = 0.5;
+        menu_div.style.height = '0px';
+        menu_div.style.opacity = 0.1;
 
         // Provide a simple button to expand the menu if it is auto-minimized
         var expand_menu_btn = cdoc.createElement('div');
+        expand_menu_btn.setAttribute('title', 'Click to display menu - Escape key to toggle!');
         expand_menu_btn.setAttribute('class', 'tranquility_expand_menu_btn');
         expand_menu_btn.setAttribute('id', 'tranquility_expand_menu_btn');
         expand_menu_btn.textContent = "(+)";
+        cdoc.body.appendChild(expand_menu_btn);
         expand_menu_btn.addEventListener("click", Tranquility.handleClickEvent, false);
-        menu_div.appendChild(expand_menu_btn);
-
     },
     
     
@@ -1425,6 +1478,12 @@ var Tranquility = {
 
         var cnodes = cdoc.childNodes;
         for(var i=cnodes.length -1; i > -1; i--) {
+            // Make sure that PRE nodes are ignored
+            // Otherwise, their spaces and line breaks are removed
+            // destroying their formatting
+            if(cnodes[i].nodeName == "PRE") {
+                continue;
+            }
             if(cnodes[i].nodeType == 1) {
                 Tranquility.removeWhiteSpaceComments(cnodes[i]);
             }
@@ -1936,11 +1995,7 @@ var Tranquility = {
                 var btn = contentDoc.getElementById('tranquility_offline_links_btn');
                 btn.setAttribute('data-active-link', thisURL);
                 Tranquility.addBackEventListeners(contentDoc);
-                Tranquility.gTranquilDoc[thisURL] = contentDoc.cloneNode(true);
-                
-                setTimeout(function() {
-                    Tranquility.hideMenuDiv(contentDoc);
-                }, 10000);
+                Tranquility.gTranquilDoc[thisURL] = contentDoc.cloneNode(true);                
             };      
         };
     },
@@ -2083,7 +2138,10 @@ var Tranquility = {
             }
             Tranquility.applyFontPreferences(contentDoc);
             Tranquility.gTranquilDoc[url] = contentDoc.cloneNode(true);
-            Tranquility.saveContentOffline(url);
+            // But save to database only if not in private browsing mode
+            if (!Tranquility.inPrivateBrowsingMode()) {
+                Tranquility.saveContentOffline(url);
+            }
         };
         
         cancelButton.onclick = function() {
