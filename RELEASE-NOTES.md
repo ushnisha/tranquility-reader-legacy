@@ -1,3 +1,15 @@
+## Version 1.1.7:
+
+* Ability to edit annotations
+
+* Auto-hide the menu after 10 seconds (the menu was obscuring 
+  part of the content). Menu can be expanded using the (+) button.
+
+* Minor enhancements to the algorithm (delete a larger range 
+  of hidden elements in the web page) 
+
+--------------------------
+
 ## Version 1.1.6:
 
 * Ability to add notes/annotations to offline content; Select a 

@@ -203,6 +203,11 @@ var Tranquility = {
                 var tdoc = Tranquility.gTranquilDoc[thisURL].cloneNode(true);
                 Tranquility.addBackEventListeners(tdoc);
                 contentDoc.replaceChild(tdoc.documentElement, contentDoc.documentElement );
+                // Need to call setTimeout to auto hide the menu bar if we toggle back and forth
+                // between the tranquility version and the original document.
+                setTimeout(function() {
+                    Tranquility.hideMenuDiv(contentDoc);
+                }, 10000);
                 return;
             }
             catch(err) {
@@ -302,13 +307,14 @@ var Tranquility = {
         Tranquility.reformatHeader(contentDoc);
 
         // Delete any hidden images (these are typically spacers)
-        var imgs = contentDoc.getElementsByTagName("img");
-        for(var im=imgs.length - 1; im >=0;  im--)  {
-            if((imgs[im].style.visibility != undefined) && 
-               (imgs[im].style.visibility == 'hidden')) 
-                imgs[im].parentNode.removeChild(imgs[im]);
+        // Also, delete any content that has display = 'none' or visibility == 'hidden'
+        // This was being done only for spacer images, but seems like a meaningful thing
+        // to do for all elements, given that all scripts are also deleted in the Tranquility view
+        var hiddenTags = ["DIV", "P", "IMG"];
+        for(var i=0; i < hiddenTags.length; i++) {
+            Tranquility.deleteHiddenElements(contentDoc, hiddenTags[i]);
         }
-
+        
         // Processing for ads related DIV's; several websites seem to use LI elements
         // within the ads DIV's, or for navigation links which are not required in the 
         // Tranquility view.  In this section, we try to delete DIV's that have at least 
@@ -324,7 +330,7 @@ var Tranquility = {
         // Can be made a parameter in later versions
         // First run with minSize ZERO
         // Removed TD and DD for now
-        var pruneTagList = ["LI", "DIV", "OL", "UL", "FORM", "TABLE", "ARTICLE", "SECTION"];
+        var pruneTagList = ["LI", "DIV", "OL", "UL", "FORM", "TABLE", "ARTICLE", "SECTION", "SPAN", "P"];
         var minSize = 0;
         totalSize = Tranquility.computeSize(contentDoc.documentElement);
         for(var p=0; p < pruneTagList.length; p++) {
@@ -339,6 +345,15 @@ var Tranquility = {
             Tranquility.pruneTag(contentDoc, pruneTagList[p], 0.0, minSize, totalSize);
         } 
   
+        // Second pass
+        // Remove any elements that have zero length textContent
+        pruneTagList = ["LI", "DIV", "OL", "UL", "FORM", "TABLE", "ARTICLE", "SECTION", "SPAN", "P"];
+        minSize = 0;
+        totalSize = Tranquility.computeSize(contentDoc.documentElement);
+        for(var p=0; p < pruneTagList.length; p++) {
+            Tranquility.pruneTag(contentDoc, pruneTagList[p], 0.0, minSize, totalSize);
+        } 
+        
         if(Tranquility.prefs.getCharPref('pruningStrategy') == "Aggressive") { 
             // Heuristic to try and handle blog style pages 
             // where no div has a substantial % of content
@@ -445,9 +460,10 @@ var Tranquility = {
         }
 
         // Add the "Menu Items" to the top of the page
-        var menu_div = contentDoc.createElement("div");
+        var menu_div = contentDoc.createElement("DIV");
         menu_div.setAttribute('class', 'tranquility_menu');
         menu_div.setAttribute('id', 'tranquility_menu');
+        menu_div.setAttribute('align', 'center');
         //contentDoc.body.appendChild(menu_div);
 
         // Finally, beautify with two container DIV's to center align the content
@@ -484,24 +500,14 @@ var Tranquility = {
                 i--; 
             }
         }
-
-        // Add some spacing paragraphs to the top of the inner div before we show any content
-        // This will prevent text overlapping with the "Menu" div.
-        var p_elem = document.createElement("p");
-        cdiv_inner.insertBefore(p_elem.cloneNode(true), cdiv_inner.firstChild);
-        cdiv_inner.insertBefore(p_elem.cloneNode(true), cdiv_inner.firstChild);
-        
-        
+                
         // Add the navigation links div into the tranquility_innercontainer
         // Do this only if we are processing a NON-PRINT mode; otherwise, we
         // very likely have the entire document already loaded
         //
         if((mode == "NON-PRINT") && (Tranquility.computeSize(Tranquility.gNavLinks[thisURL]) > 0)) {
-            var p_elem = document.createElement("p");
+            var p_elem = contentDoc.createElement("p");
             cdiv_inner.insertBefore(p_elem.cloneNode(true), cdiv_inner.firstChild);
-            //var top_nav_links_div = Tranquility.gNavLinks[thisURL].cloneNode(true);
-            //top_nav_links_div.setAttribute('id', 'tranquility_nav_links_top');
-            //cdiv_inner.insertBefore(top_nav_links_div, cdiv_inner.firstChild);
             cdiv_inner.appendChild(p_elem.cloneNode(true));
             var bot_nav_links_div = Tranquility.gNavLinks[thisURL].cloneNode(true);
             bot_nav_links_div.setAttribute('id', 'tranquility_nav_links_bot');
@@ -564,9 +570,13 @@ var Tranquility = {
         viewnotes_button_div.setAttribute('id', 'tranquility_viewnotes_btn');
         viewnotes_button_div.textContent = strBundle.getString('viewnotes');
         viewnotes_button_div.addEventListener("click", Tranquility.handleClickEvent, false);
-        //contentDoc.body.appendChild(viewnotes_button_div);
         menu_div.appendChild(viewnotes_button_div);
 
+        // And setTimeOut to hide the menu_div
+        setTimeout(function() {
+            Tranquility.hideMenuDiv(contentDoc);
+        }, 10000);
+        
         // Apply background image preference
         if(this.prefs.getBoolPref("useBackgroundImage")) {
             contentDoc.body.setAttribute('class', 'tranquility');
@@ -862,13 +872,19 @@ var Tranquility = {
         } 
         // if clicked on an annotation, toggle the visibility of the annotation note
         else if(event.target.className == 'tranquility_annotation_selection') {
+            var orig_note = event.target.nextSibling;
+            var notep = orig_note.cloneNode(true);
+            // Set the user data flag on the original note; 
+            //this is used to update a note that is edited.
+            orig_note.setAttribute('data-active-note', 'true');
             var note_div = Tranquility.createAnnotationNote(contentDoc, 
-                                                            event.target.nextSibling.cloneNode(true),
+                                                            notep,
                                                             Tranquility.prefs.getIntPref("defaultWidthPctg"),
                                                             event.pageY);
             var masker = contentDoc.getElementById('tranquility_masker');
-            
+
             note_div.style.visibility = 'visible';
+            note_div.contentEditable = 'true';
             masker.style.visibility = 'visible';
             event.stopPropagation();
         }
@@ -877,6 +893,24 @@ var Tranquility = {
         else if(event.target.className == 'tranquility_annotation_note' ||
                 event.target.className == 'tranquility_view_notes') {
             event.stopPropagation();
+            if(event.target.className == 'tranquility_annotation_note')
+                event.target.setAttribute('contentEditable', 'true');
+            event.target.focus();
+        }
+        // If clicked on the "expand menu div" button, then expand the menu div
+        else if(event.target.id == 'tranquility_expand_menu_btn') {
+            var expand_btn = event.target;
+            var menu_div = expand_btn.parentNode;
+            menu_div.style.height = '50px';
+            menu_div.style.opacity = 1;
+            var menu_items = menu_div.childNodes;
+            for(var i=0; i < menu_items.length; i++) {
+                menu_items[i].style.visibility = 'visible';
+            };
+            menu_div.removeChild(expand_btn);
+            setTimeout(function() {
+                Tranquility.hideMenuDiv(contentDoc);
+            }, 10000);
         }
         // if clicked inside the iframe, then don't hide it; stop bubbling back to body
         else if(event.target.id == 'tranquility_dictionary')  {
@@ -951,10 +985,44 @@ var Tranquility = {
                 Tranquility.hideOfflineLinksDiv(contentDoc);  
             }
             else if(contentDoc.getElementById('tranquility_annotation_note') != undefined) {
-                var masker = contentDoc.getElementById('tranquility_masker');
-                masker.style.visibility = 'hidden';            
+                // First, check to see if the note has been modified/edited
+                // If yes, update the original note element and update the DB
                 var note = contentDoc.getElementById('tranquility_annotation_note');
-                note.parentNode.removeChild(note);
+                var orig_note;
+                var orig_notes = contentDoc.getElementsByClassName('tranquility_annotation_text');
+                for(var i=0; i < orig_notes.length; i++) {
+                    if ((orig_notes[i].getAttribute('data-active-note') != undefined && 
+                         orig_notes[i].getAttribute('data-active-note') == "true")) {
+                        orig_note = orig_notes[i];
+                    }
+                }
+                
+                if(orig_note != undefined) {
+                    orig_note.setAttribute('data-active-note', 'false');
+                    if(orig_note.textContent != note.textContent) {
+                        var note_p = note.childNodes;
+                        var newText = "";
+                        for(var i=0; i < note_p.length; i++) {
+                            newText = newText + note_p[i].textContent + "\n";
+                        }
+                        orig_note.textContent = newText;
+
+                        var masker = contentDoc.getElementById('tranquility_masker');
+                        masker.style.visibility = 'hidden';            
+                        note.parentNode.removeChild(note);
+                        
+                        var btn = contentDoc.getElementById('tranquility_offline_links_btn');
+                        var url =  btn.getAttribute('data-active-link');
+                        Tranquility.gTranquilDoc[url] = contentDoc.cloneNode(true);
+                        Tranquility.saveContentOffline(url);                    
+                    }
+                }
+                else {
+                    // Next, delete the note view and hide the masker
+                    var masker = contentDoc.getElementById('tranquility_masker');
+                    masker.style.visibility = 'hidden';            
+                    note.parentNode.removeChild(note);
+                }
             }
             else if(contentDoc.getElementById('tranquility_view_notes') != undefined) {
                 var masker = contentDoc.getElementById('tranquility_masker');
@@ -966,7 +1034,8 @@ var Tranquility = {
                 Tranquility.hideDictionaryView(contentDoc);
         }
     },
-
+    
+    
     getAnchorNode: function (elem) {
     
         var urlString = elem.href;
@@ -1026,6 +1095,33 @@ var Tranquility = {
         }
     },
 
+    
+    hideMenuDiv: function(cdoc) {
+
+        // This is the setTimeout function for hiding menu after loading a page
+        // either from the database or during the first tranquility conversion
+        
+        var menu_div = cdoc.getElementById('tranquility_menu');
+        // Hide all the menu items and reduce its height
+        var menu_items = menu_div.childNodes;
+        for(var i=0; i < menu_items.length; i++) {
+            menu_items[i].style.visibility = 'hidden';
+            menu_items[i].style.visibility = 'hidden';
+        }
+        menu_div.style.height = '10px';
+        menu_div.style.opacity = 0.5;
+
+        // Provide a simple button to expand the menu if it is auto-minimized
+        var expand_menu_btn = cdoc.createElement('div');
+        expand_menu_btn.setAttribute('class', 'tranquility_expand_menu_btn');
+        expand_menu_btn.setAttribute('id', 'tranquility_expand_menu_btn');
+        expand_menu_btn.textContent = "(+)";
+        expand_menu_btn.addEventListener("click", Tranquility.handleClickEvent, false);
+        menu_div.appendChild(expand_menu_btn);
+
+    },
+    
+    
     toggleDictionaryView: function(cdoc) {
 
         var target = cdoc.getElementById('tranquility_dictionary');
@@ -1110,11 +1206,24 @@ var Tranquility = {
                 continue;
             }
 
-            if(tElem.id.substr(0,11) !== "tranquility") {
+            if(tElem.id == undefined || tElem.id.substr(0,11) !== "tranquility") {
                 tElem.parentNode.removeChild(tElem);
             }
         }
     },
+
+    deleteHiddenElements: function(cdoc, tagString) {
+        // Remove elements that have display==none or visibility==hidden
+        var elems = cdoc.getElementsByTagName(tagString);
+        for(var i=elems.length - 1; i >=0;  i--)  {
+            if(((elems[i].style.visibility != undefined) && 
+                (elems[i].style.visibility == 'hidden')) ||
+               ((elems[i].style.display != undefined) && 
+                (elems[i].style.display == 'none')))                                
+                elems[i].parentNode.removeChild(elems[i]);
+        }
+    },
+    
 
     pruneAdsTag: function(cdoc, url, tagString, thresholdPctg, totalSize) {
 
@@ -1828,6 +1937,10 @@ var Tranquility = {
                 btn.setAttribute('data-active-link', thisURL);
                 Tranquility.addBackEventListeners(contentDoc);
                 Tranquility.gTranquilDoc[thisURL] = contentDoc.cloneNode(true);
+                
+                setTimeout(function() {
+                    Tranquility.hideMenuDiv(contentDoc);
+                }, 10000);
             };      
         };
     },
@@ -1966,6 +2079,7 @@ var Tranquility = {
             }
             else {
                 var url = newTabBrowser.currentURI.spec;
+                btn.setAttribute('data-active-link', url);
             }
             Tranquility.applyFontPreferences(contentDoc);
             Tranquility.gTranquilDoc[url] = contentDoc.cloneNode(true);
@@ -1987,9 +2101,11 @@ var Tranquility = {
         note_div.setAttribute('id', 'tranquility_annotation_note');
         note_div.style.visibility = 'hidden';
         note_div.style.padding = '15px';
-        note_div.addEventListener("click", Tranquility.handleClickEvent, false);
+        //note_div.addEventListener("click", Tranquility.handleClickEvent, true);
         contentDoc.body.appendChild(note_div);
+
         note_p.setAttribute('class', 'tranquility_annotation_note');
+        //note_p.addEventListener("click", Tranquility.handleClickEvent, true);
         note_div.appendChild(note_p);
 
         var delta = (100 - read_width)/2;
@@ -2050,7 +2166,6 @@ var Tranquility = {
         return view_notes_div;
     },
     
-    
     addBackEventListeners: function(cdoc) {
 
         // Add back click event listener to body 
@@ -2080,7 +2195,7 @@ var Tranquility = {
         var dict_frame = cdoc.getElementById('tranquility_dictionary');
         if(dict_frame != undefined)
             dict_frame.addEventListener("click", Tranquility.handleClickEvent, false);
- 
+            
     },
 
     

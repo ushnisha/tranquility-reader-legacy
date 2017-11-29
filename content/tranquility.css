@@ -44,6 +44,7 @@ div.tranquility_innercontainer
   padding-top: 10px;
   padding-bottom: 10px;
   padding-right: 15px;
+  margin-top: 60px;
   font-family:Univers,Scala,Georgia,Verdana,Times,Helvetica; 
   text-align:justify;
   line-height:140%;  
@@ -247,15 +248,33 @@ div.tranquility_viewnotes_btn
   margin: 0 10px 10px 0;
 }
 
+div.tranquility_expand_menu_btn
+{
+  font-family:Univers,Scala,Georgia,Verdana,Times,Helvetica; 
+  font-size:20px;
+  width: 20px;
+  height: 20px;
+  z-index: 9999980;
+  text-align: right;
+  float: right;
+  padding-top: 20px;
+  top: 0px;
+}
+
 div.tranquility_menu
 {
   font-family:Univers,Scala,Georgia,Verdana,Times,Helvetica; 
   border-bottom: solid 1px silver;
   text-align:justify;
   position: fixed;
-  top: 0px;
-  height: 50px; 
+  height: 50px;
+  top: 0px;  
   padding-top: 10px;
+  padding-left: 0px;
+  padding-right: 0px;
+  padding-bottom: 0px;
+  z-index: 9999980;
+  transition: height 0.5s;
 }
 
 span.tranquility_annotation
@@ -327,6 +346,8 @@ div.tranquility_annotation_note
   z-index: 9999990;
   position: fixed;
   visibility: hidden;
+  display: inline;
+  white-space: pre-wrap;
   background-color:#FFFFFF; 
 }
 
