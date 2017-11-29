@@ -1,3 +1,42 @@
+## Version 1.2:
+
+* Changed keyboard shortcut to show/hide menu div
+
+* Moved Menu to the bottom of the window; 
+  hide it faster (less obtrusive)
+
+* Tranquility font size will override the page specific 
+  cached zoom level
+
+* Support for a background image (FilePicker to select 
+  local file)
+
+* Support for custom hex color codes for background, 
+  font, links, annotation highlighting
+
+* Converted some hard coded string values to use localization
+
+* Reduced complexity by eliminating support for defaultFontColor
+  and defaultBackgroundColor etc.
+
+* Removed support for versions 16.0 - 19.0
+
+* Removed support for private browsing for pre 20.0 versions 
+  of firefox (was generating a warning during validation of 
+  earlier releases; and is no longer an issue).
+
+* No longer detect documents with minimal content and no longer 
+  warn about document still loading (did not help the user 
+  experience; more negative feedback than positive regarding 
+  these features)
+
+* Now when offline reading list is requested when the active 
+  tab is not in tranquility view (or not a html document, 
+  such as the "New Tab" view), then the offline reading list 
+  is opened in a new tab. 
+
+--------------------------
+
 ## Version 1.1.8:
 
 * Check private browsing mode and alert that "Read Later" 

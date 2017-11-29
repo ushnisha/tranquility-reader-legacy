@@ -14,7 +14,7 @@
          oncommand="Tranquility.onSelectionRightClickContextMenu(gBrowser.getBrowserForTab(gBrowser.selectedTab), 'keyboard', 'dictionary');"/>
     <key id="tranquility-wikipedia-key" modifiers="accel alt" key="W" 
          oncommand="Tranquility.onSelectionRightClickContextMenu(gBrowser.getBrowserForTab(gBrowser.selectedTab), 'keyboard', 'wikipedia');"/>
-    <key id="tranquility-toggle-display-menu-key" keycode="VK_ESCAPE" 
+    <key id="tranquility-toggle-display-menu-key" modifiers="accel" key="M" 
          oncommand="Tranquility.toggleMenuDisplay(gBrowser.getBrowserForTab(gBrowser.selectedTab));"/>
   </keyset>
 

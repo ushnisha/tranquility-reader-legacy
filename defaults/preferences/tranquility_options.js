@@ -1,4 +1,5 @@
 pref("extensions.tranquility.useBackgroundImage", false);
+pref("extensions.tranquility.backgroundImageURL", "tranquility.jpg");
 pref("extensions.tranquility.firstrun", true);
 pref("extensions.tranquility.defaultFont", "Times");
 pref("extensions.tranquility.defaultFontSize", 18);

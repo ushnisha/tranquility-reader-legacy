@@ -12,6 +12,9 @@
       <preference id="tranquility-background-image-pref"
                   name="extensions.tranquility.useBackgroundImage"
                   type="bool"/>
+      <preference id="tranquility-background-image-url-pref"
+                  name="extensions.tranquility.backgroundImageURL"
+                  type="string"/>                  
       <preference id="tranquility-default-font-pref"
                   name="extensions.tranquility.defaultFont"
                   type="string"/>
@@ -36,21 +39,12 @@
       <preference id="tranquility-background-color-pref"
                   name="extensions.tranquility.backgroundColor"
                   type="string"/>
-      <preference id="tranquility-use-default-background-color-pref"
-                  name="extensions.tranquility.useDefaultBackgroundColor"
-                  type="bool"/>
       <preference id="tranquility-font-color-pref"
                   name="extensions.tranquility.fontColor"
                   type="string"/>
-      <preference id="tranquility-use-default-font-color-pref"
-                  name="extensions.tranquility.useDefaultFontColor"
-                  type="bool"/>
       <preference id="tranquility-link-color-pref"
                   name="extensions.tranquility.linkColor"
                   type="string"/>
-      <preference id="tranquility-use-default-link-color-pref"
-                  name="extensions.tranquility.useDefaultLinkColor"
-                  type="bool"/>
       <preference id="tranquility-annotation-highlight-color-pref"
                   name="extensions.tranquility.annotationHighlightColor"
                   type="string"/>
@@ -68,12 +62,24 @@
         <checkbox id="tranquility-image-checkbox" 
                   preference="tranquility-background-image-pref" 
                   label="&backgroundimg.label;"/>
-        <checkbox id="tranquility-use-default-background-color-checkbox" 
-                  preference="tranquility-use-default-background-color-pref" 
-                  label="&tranquility.defaultBackgroundColor.label;"/>
-        <checkbox id="tranquility-use-default-font-color-checkbox" 
-                  preference="tranquility-use-default-font-color-pref" 
-                  label="&tranquility.defaultFontColor.label;"/>
+        <grid>
+          <columns>
+            <column flex="1" />
+            <column />
+          </columns>
+          <rows>
+            <row align="center">
+              <label value="&tranquility.backgroundImageURL.label;" />
+            </row>
+            <row align="center">
+              <textbox id="tranquility.backgroundImageFileName" 
+                       preference="tranquility-background-image-url-pref" 
+                       disabled="true" />
+              <button label="&tranquility.backgroundImageURLSelect.label;"
+                       oncommand="pickLocalFile();" flex="1" />
+            </row>
+          </rows>
+        </grid>
         <grid>
           <columns>
             <column flex="1" />
@@ -82,21 +88,29 @@
           <rows>
             <row align="center">
               <label value="&tranquility.backgroundColor.label;" />
+              <textbox id="tranquility.background-color-input" 
+                       preference="tranquility-background-color-pref" maxlength="7" />
               <colorpicker type="button" id="tranquility-background-color-button" 
                        preference="tranquility-background-color-pref" flex="1" />
             </row>
             <row align="center">
               <label value="&tranquility.fontColor.label;" />
+              <textbox id="tranquility.font-color-input" 
+                       preference="tranquility-font-color-pref" maxlength="7" />
               <colorpicker type="button" id="tranquility-font-color-button" 
                        preference="tranquility-font-color-pref" flex="1" />
             </row>
             <row align="center">
               <label value="&tranquility.linkColor.label;" />
+              <textbox id="tranquility.link-color-input" 
+                       preference="tranquility-link-color-pref" maxlength="7" />
               <colorpicker type="button" id="tranquility-link-color-button" 
                        preference="tranquility-link-color-pref" flex="1" />
             </row>
             <row align="center">
               <label value="&tranquility.annotationHighlightColor.label;" />
+              <textbox id="tranquility.annotation-highlight-color-input" 
+                       preference="tranquility-annotation-highlight-color-pref" maxlength="7" />
               <colorpicker type="button" id="tranquility-annotation-highlight-color-button" 
                        preference="tranquility-annotation-highlight-color-pref" flex="1" />
             </row>

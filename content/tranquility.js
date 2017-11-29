@@ -46,9 +46,11 @@ var Tranquility = {
     gOrigDoc: [],
     gTranquilDoc: [],
     gOrigLinks: [],
+    gOrigZoom: [],
     gNavLinks: [],
     gDOMLoaded: [],
     prefs: null,
+    currentBodyURI: null,
   
     onLoad: function() {
     
@@ -109,44 +111,22 @@ var Tranquility = {
             Components.utils.import("resource://gre/modules/PrivateBrowsingUtils.jsm");
             return PrivateBrowsingUtils.isWindowPrivate(window); 
         } catch(e) {
-            // pre Firefox 20
-            try {
-                var pbs = Components.classes["@mozilla.org/privatebrowsing;1"].
-                            getService(Components.interfaces.nsIPrivateBrowsingService);
-                return pbs.privateBrowsingEnabled;
-            } catch(e) {
-                // pre FireFox 3.5? And does not support private browsing?
-                // HOW?!! This addon does not support versions prior to Firefox 16!
-                Components.utils.reportError(e);
-                return false;
-            }
+            // pre Firefox 20?
+            // HOW?!! This addon does not support versions prior to Firefox 20!
+            Components.utils.reportError(e);
+            return false;
         }
     },
 
     onLinkRightClickContextMenu: function(url) {
 
-        var strBundle = document.getElementById("tranquility-string-bundle");
-        var notifyString = strBundle.getString('waitingForLoadNotification');
         var newTabBrowser1 = gBrowser.getBrowserForTab(gBrowser.addTab(url));
-        var lnotification = PopupNotifications.show(newTabBrowser1,
-                                                    "tranquility_notify_doc_loading",
-                                                    notifyString,
-                                                    null, /* anchor ID */
-                                                    null, /* main action */
-                                                    null, /* secondary actions */
-                                                    { /* options */
-                                                    persistWhileVisible: true,
-                                                    timeout: Date.now + 60000
-                                                    }
-                                                );
-
         var linkRightClickListener = function(e) { 
             if((e.originalTarget.nodeName == '#document') &&
                (e.originalTarget.defaultView.location.href == newTabBrowser1.currentURI.spec)) {
                 Tranquility.gDOMLoaded[newTabBrowser1.currentURI.spec] = true;
                 Tranquility.onToolBarOrKeyboard(newTabBrowser1, null);
                 newTabBrowser1.removeEventListener("DOMContentLoaded", linkRightClickListener, true);
-                lnotification.remove();
             }
         };
  
@@ -213,6 +193,15 @@ var Tranquility = {
             try {
                 var odoc = Tranquility.gOrigDoc[thisURL].cloneNode(true);
                 contentDoc.replaceChild(odoc.documentElement, contentDoc.documentElement );
+                // Restore custom zoom level of original page
+                // In this case, this was the firefox calculated zoom for that page,
+                // adjusting for the screenmanagers systemDefaultScale; so this cached
+                // value can be used directly to set fullZoom back to its original value
+                //
+                if(Tranquility.gOrigZoom[thisURL] != undefined) {
+                    var docViewer = newTabBrowser.markupDocumentViewer;
+                    docViewer.fullZoom = Tranquility.gOrigZoom[thisURL];
+                }
                 return;
             }
             catch(err) {
@@ -227,6 +216,15 @@ var Tranquility = {
                 Tranquility.addBackEventListeners(tdoc);
                 contentDoc.replaceChild(tdoc.documentElement, contentDoc.documentElement );
                 Tranquility.hideMenuDiv(contentDoc);
+                // Set the zoom level back to 1.0 since this information is lost
+                // when toggling back and forth between the original page and tranquility view
+                // Using systemDefaultScale based on screenmanager service in order
+                // to comply with https://bugzil.la/858185
+                //
+                var sm = Cc["@mozilla.org/gfx/screenmanager;1"].getService(Ci.nsIScreenManager);
+                var systemDefaultScale = sm.systemDefaultScale;
+                var docViewer = newTabBrowser.markupDocumentViewer;
+                docViewer.fullZoom = systemDefaultScale;
                 return;
             }
             catch(err) {
@@ -249,24 +247,10 @@ var Tranquility = {
         // for contentDoc.readyState == "complete"; but process even if we reach
         // contentDoc.readyState == "interactive"; 
         // this also improves the user experience (reduced wait times)
-        var strBundle = document.getElementById("tranquility-string-bundle");
-        var notifyString = strBundle.getString('waitingForLoadNotification');
-        var lnotification = PopupNotifications.show(newTabBrowser,
-                                                  "tranquility_notify_doc_loading",
-                                                  notifyString,
-                                                  null, /* anchor ID */
-                                                  null, /* main action */
-                                                  null, /* secondary actions */
-                                                  { /* options */
-                                                   persistWhileVisible: true,
-                                                   timeout: Date.now + 60000
-                                                  }
-                                                 );
 
         // If document has loaded sufficiently, process at once
         if((contentDoc.readyState == "interactive") || (contentDoc.readyState == "complete")) {
             Tranquility.processToolBarOrKeyBoard(newTabBrowser);
-            lnotification.remove();
         }
         // else, wait for DOMContentLoaded and then process
         else {
@@ -278,7 +262,6 @@ var Tranquility = {
                     Tranquility.gDOMLoaded[thisURL] = true;
                     Tranquility.processToolBarOrKeyBoard(newTabBrowser);
                     newTabBrowser.removeEventListener("DOMContentLoaded", domLoadedListener, true);
-                    lnotification.remove();
                 }
             }
         };
@@ -290,6 +273,17 @@ var Tranquility = {
         var thisURL = newTabBrowser.currentURI.spec;
         var contentDoc = newTabBrowser.contentDocument;
      
+        // Handle corner case where the web page does not have any html content
+        // For example, the about:newtab page or some other page with only XML content
+        // In these cases, there is nothing for tranquility to do; just return
+        // This code is to prevent any errors being thrown in following code that tries
+        // to clone the contentDoc (operation not allowed).
+        // This error was identified by Leszek Zyczkowski while reviewing version 1.1.9
+        //
+        if (contentDoc.body == undefined) {
+          return;
+        }
+        
         // Backup the original innerHTML of the page
         // Required in case the XMLHTTPRequest for print/single-page view fails
         newTabBrowser.stop();
@@ -312,7 +306,8 @@ var Tranquility = {
         var thisURL = newTabBrowser.currentURI.spec;
         var contentDoc = newTabBrowser.contentDocument;
         var continueProcessing = true;
-        
+        var docViewer = newTabBrowser.markupDocumentViewer;
+    
         // Remove unnecessary whitespaces and comments
         Tranquility.removeWhiteSpaceComments(contentDoc);
  
@@ -333,7 +328,7 @@ var Tranquility = {
         for(var i=0; i < hiddenTags.length; i++) {
             Tranquility.deleteHiddenElements(contentDoc, hiddenTags[i]);
         }
-        
+
         // Processing for ads related DIV's; several websites seem to use LI elements
         // within the ads DIV's, or for navigation links which are not required in the 
         // Tranquility view.  In this section, we try to delete DIV's that have at least 
@@ -343,7 +338,7 @@ var Tranquility = {
         for(var p=0; p < pruneAdsTagList.length; p++) {
             Tranquility.pruneAdsTag(contentDoc, thisURL, pruneAdsTagList[p], 0.7, totalSize);
         }
-    
+
         // Cleanup select tags that have content length smaller than minSize 
         // This helps clean up a number of junk DIV's before we get to real content
         // Can be made a parameter in later versions
@@ -418,59 +413,11 @@ var Tranquility = {
             Tranquility.replaceParent(contentDoc, "DIV", 0.9);
             Tranquility.replaceParent(contentDoc, "SPAN", 0.9);
         }
-
-        // At his time, most of the cleanup has happened; check the size of the document
-        // If it is below a certain absolute threshold, then maybe Tranquility did not
-        // work as well, or the web page is not a suitable candidate.  Revert to the original 
-        // document in this case.
-        var finalSize = Tranquility.computeSize(contentDoc.documentElement);
-        if(finalSize < 1000) {
-            // If the print mode failed to find sufficient content, return false
-            // Let Traquility try to process the original view
-            // The reason for this is that some websites require a login for the PRINT
-            // or Single Page view; or they try to launch the Print window
-            //
-            if(mode == "PRINT") {
-                return false;
-            }
-            continueProcessing = false;
-            var strBundle = document.getElementById("tranquility-string-bundle");
-            var notifyString = strBundle.getString('insufficientContentNotification');
-            var fnotification = PopupNotifications.show(newTabBrowser,
-                                                        "tranquility_notify_doc_loading",
-                                                        notifyString,
-                                                        null, /* anchor ID */
-                                                        /* main action */
-                                                        {
-                                                            label: "Process Anyway!",
-                                                            accessKey: "C",
-                                                            callback: function() {
-                                                                continueProcessing = true;                               
-                                                            }
-                                                        },
-                                                        null, /* secondary actions */
-                                                        { /* options */
-                                                            persistWhileVisible: true,
-                                                            timeout: Date.now + 5000
-                                                        }
-                                                    );
-
-            setTimeout(function () { 
-                fnotification.remove(); 
-                if(!continueProcessing) {
-                    var odoc = Tranquility.gOrigDoc[thisURL].cloneNode(true);
-                    contentDoc.replaceChild(odoc.documentElement, contentDoc.documentElement );
-                    newTabBrowser.reload();
-                    delete Tranquility.gOrigDoc[thisURL];
-                    delete Tranquility.gTranquilDoc[thisURL];
-                    delete Tranquility.gOrigLinks[thisURL];
-                    delete Tranquility.gNavLinks[thisURL];
-                    delete Tranquility.gDOMLoaded[thisURL];
-                }
-            }, 5000);
-        }
-          
-
+        
+        // Removed code to revert to original page when very little content is found 
+        // The prior notification process was annoying at best
+        // Now we will always show the tranquility view and let the user decide to revert
+        
         // Format the tags in a nice readable font/style using custom css loaded in header
         var reformatTagList = ["UL", "OL", "LI", "DIV", "SPAN", "P", "FONT", "BODY", "H1",
                                "PRE", "TABLE", "ARTICLE", "SECTION"];
@@ -595,31 +542,40 @@ var Tranquility = {
         setTimeout(function() {
             Tranquility.hideMenuDiv(contentDoc);
         }, 1000);
-        
+
         // Apply background image preference
         if(this.prefs.getBoolPref("useBackgroundImage")) {
-            contentDoc.body.setAttribute('class', 'tranquility');
-        }
-        else {
-            contentDoc.body.setAttribute('class', 'tranquility-no-image');
-        }  
+            Components.utils.import("resource://gre/modules/FileUtils.jsm");
+            var file = new FileUtils.File(this.prefs.getCharPref("backgroundImageURL"));
+            Tranquility.updateBodyCSS(true, file);
 
-        //Apply backgroundColor preference
-        var elems = contentDoc.documentElement.getElementsByTagName("*");
-        for(var i=0; i < elems.length; i++) {
-            if((elems[i].getAttribute('class')) && 
-               (elems[i].getAttribute('class') != 'tranquility_links') && 
-               (elems[i].getAttribute('class') != 'tranquility_masker') && 
-               (elems[i].getAttribute('class').substr(0,11) === 'tranquility')) {
-                if(this.prefs.getBoolPref("useDefaultBackgroundColor")) {
-                    elems[i].style.backgroundColor = "#FDFDFD";
-                }
-                else {
-                    elems[i].style.backgroundColor = this.prefs.getCharPref("backgroundColor");
+            var elems = contentDoc.documentElement.getElementsByTagName("*");
+            var exclude_tags = ["tranquility_links", "tranquility_masker", "tranquility_menu", 
+                                "tranquility_offline_links", "tranquility_annotation", 
+                                "tranquility_annotation_selection"];
+            for(var i=0; i < elems.length; i++) {
+                if((elems[i].getAttribute('class')) && 
+                   (exclude_tags.indexOf(elems[i].getAttribute('class')) == -1) &&
+                   (elems[i].getAttribute('class').substr(0,11) === 'tranquility')) {
+                    elems[i].style.backgroundColor = 'transparent';
                 }
             }
-        }   
-      
+        }
+        else {
+            Tranquility.updateBodyCSS(false, null);
+            //Apply backgroundColor preference
+            var elems = contentDoc.documentElement.getElementsByTagName("*");
+            exclude_tags = ["tranquility_links", "tranquility_masker",
+                            "tranquility_annotation", "tranquility_annotation_selection"];
+            for(var i=0; i < elems.length; i++) {
+                if((elems[i].getAttribute('class')) && 
+                   (exclude_tags.indexOf(elems[i].getAttribute('class')) == -1) &&
+                   (elems[i].getAttribute('class').substr(0,11) === 'tranquility')) {
+                    elems[i].style.backgroundColor = this.prefs.getCharPref("backgroundColor");
+                }
+            }   
+        }
+
         Tranquility.applyFontPreferences(contentDoc);
         
         // Apply fontColor preference
@@ -627,24 +583,14 @@ var Tranquility = {
         for(var i=0; i < elems.length; i++) {
             if((elems[i].getAttribute('class')) && 
                (elems[i].getAttribute('class').substr(0,11) === 'tranquility')) {
-                if(this.prefs.getBoolPref("useDefaultFontColor")) {
-                    elems[i].style.color = "#000000";
-                }
-                else {
-                    elems[i].style.color = this.prefs.getCharPref("fontColor");
-                }
+                elems[i].style.color = this.prefs.getCharPref("fontColor");
             }
         }   
 
         // Apply linkColor preference
         var elems = contentDoc.documentElement.getElementsByTagName("a");
         for(var i=0; i < elems.length; i++) {
-            if(this.prefs.getBoolPref("useDefaultLinkColor")) {
-                elems[i].style.color = "#0000FF";
-            }
-            else {
-                elems[i].style.color = this.prefs.getCharPref("linkColor");
-            }
+            elems[i].style.color = this.prefs.getCharPref("linkColor");
         }   
 
         // Update the width based on the preference setting
@@ -655,15 +601,13 @@ var Tranquility = {
 
         // Apply text justification
         var elems = contentDoc.documentElement.getElementsByTagName("*");
+        exclude_tags = ["tranquility_links", "tranquility_nav_links", "tranquility_more_links_btn", 
+                        "tranquility_offline_links_btn", "tranquility_viewnotes_btn", 
+                        "tranquility_read_later_btn"];
         for(var i=0; i < elems.length; i++) {
             if((elems[i].getAttribute('class')) && 
-               (elems[i].getAttribute('class').substr(0,11) === 'tranquility') &&
-               (elems[i].getAttribute('class') !== 'tranquility_links') &&
-               (elems[i].getAttribute('class') !== 'tranquility_nav_links') &&
-               (elems[i].getAttribute('class') !== 'tranquility_more_links_btn') &&
-               (elems[i].getAttribute('class') !== 'tranquility_offline_links_btn') &&
-               (elems[i].getAttribute('class') !== 'tranquility_viewnotes_btn') &&
-               (elems[i].getAttribute('class') !== 'tranquility_read_later_btn')) {
+               (exclude_tags.indexOf(elems[i].getAttribute('class')) == -1) &&
+               (elems[i].getAttribute('class').substr(0,11) === 'tranquility')) {
                 elems[i].style.textAlign = this.prefs.getCharPref("defaultAlign");
             }
         }   
@@ -691,6 +635,19 @@ var Tranquility = {
             Tranquility.gTranquilDoc[thisURL] = clonedTranquilDoc;
         }
 
+        // force zoom level to 1.0 in tranquility view
+        // The user has already specified a custom font size
+        // and the stored zoom level on the original page 
+        // does not matter anymore
+        // Using systemDefaultScale based on screenmanager service in order
+        // to comply with https://bugzil.la/858185
+        //
+        Tranquility.gOrigZoom[thisURL] = docViewer.fullZoom;
+        var sm = Cc["@mozilla.org/gfx/screenmanager;1"].getService(Ci.nsIScreenManager);
+        var systemDefaultScale = sm.systemDefaultScale;
+        var docViewer = newTabBrowser.markupDocumentViewer;
+        docViewer.fullZoom = systemDefaultScale;
+        
         // Successfully completed processing; return true
         return true;
     },
@@ -835,11 +792,14 @@ var Tranquility = {
         var contentDoc = newTabBrowser.contentDocument;
         var urlStr = Tranquility.getAnchorNode(event.target);
 
+        var strBundle = document.getElementById("tranquility-string-bundle");
+        var readLaterNotSupportedString = strBundle.getString('readLaterNotSupportedString');
+
         // Process clicking on the "Read Later" button
         if(event.target.id == 'tranquility_read_later_btn') {
             // Check to ensure that we are not in private browsing mode
             if (Tranquility.inPrivateBrowsingMode()) {
-                alert("'Read Later' functionality is not supported in Private Browsing Mode");
+                alert(readLaterNotSupportedString);
                 event.stopPropagation();
             }
             else {
@@ -852,7 +812,7 @@ var Tranquility = {
         // Process clicking on the "Offline Links" button
         else if(event.target.id == 'tranquility_offline_links_btn') {
             if (Tranquility.inPrivateBrowsingMode()) {
-                alert("'Read Later' functionality is not supported in Private Browsing Mode");
+                alert(readLaterNotSupportedString);
                 event.stopPropagation();
             }
             else {
@@ -968,20 +928,6 @@ var Tranquility = {
                 Tranquility.onLinkRightClickContextMenu(url);
             }
             else {
-                var strBundle = document.getElementById("tranquility-string-bundle");
-                var notifyString = strBundle.getString('waitingForLoadNotification');
-                var lnotification = PopupNotifications.show(newTabBrowser,
-                                                            "tranquility_notify_doc_loading",
-                                                            notifyString,
-                                                            null, /* anchor ID */
-                                                            null, /* main action */
-                                                            null, /* secondary actions */
-                                                            { /* options */
-                                                                persistWhileVisible: true,
-                                                                timeout: Date.now + 60000
-                                                            }
-                                                        );
-
                 var linkLeftClickListener = function(e) { 
                     if((e.originalTarget.nodeName == "#document") &&
                        ((e.originalTarget.defaultView.location.href == url) ||
@@ -990,7 +936,6 @@ var Tranquility = {
                         Tranquility.onToolBarOrKeyboard(newTabBrowser, null);
                         newTabBrowser.removeEventListener("DOMContentLoaded", linkLeftClickListener, true);
                         e.originalTarget.defaultView.focus(); // otherwise, spacebar does not scroll in continuous tranquil browsing mode
-                        lnotification.remove();
                     }
                 };
                 newTabBrowser.addEventListener("DOMContentLoaded", linkLeftClickListener, true);
@@ -1101,7 +1046,9 @@ var Tranquility = {
             }
             else { 
                 // Either iframe is not defined or it is hidden; so hide masker
-                masker.style.visibility = 'hidden';
+                if(masker != undefined) {
+                    masker.style.visibility = 'hidden';
+                }
             }
         }
     },
@@ -1142,10 +1089,12 @@ var Tranquility = {
         // Delete the expand menu button and trigger a hide of the menu 
         // within 10 seconds
         var expand_menu_btn = cdoc.getElementById('tranquility_expand_menu_btn');
-        expand_menu_btn.parentNode.removeChild(expand_menu_btn);
-        setTimeout(function() {
-            Tranquility.hideMenuDiv(cdoc);
-        }, 10000);
+        if(expand_menu_btn != undefined) {
+            expand_menu_btn.parentNode.removeChild(expand_menu_btn);
+            setTimeout(function() {
+                Tranquility.hideMenuDiv(cdoc);
+            }, 4000);
+        }
 
     },
     
@@ -1164,9 +1113,12 @@ var Tranquility = {
         menu_div.style.height = '0px';
         menu_div.style.opacity = 0.1;
 
+        
         // Provide a simple button to expand the menu if it is auto-minimized
+        var strBundle = document.getElementById("tranquility-string-bundle");
+        var expandMenuString = strBundle.getString('expandMenuString');
         var expand_menu_btn = cdoc.createElement('div');
-        expand_menu_btn.setAttribute('title', 'Click to display menu - Escape key to toggle!');
+        expand_menu_btn.setAttribute('title', expandMenuString);
         expand_menu_btn.setAttribute('class', 'tranquility_expand_menu_btn');
         expand_menu_btn.setAttribute('id', 'tranquility_expand_menu_btn');
         expand_menu_btn.textContent = "(+)";
@@ -1593,13 +1545,11 @@ var Tranquility = {
     applyFontPreferences: function(contentDoc) {
         // Apply font preferences
         var elems = contentDoc.documentElement.getElementsByTagName("*");
+        var include_tags = ["tranquility", "tranquility_annotation_note", "tranquility_annotation_text", 
+                            "tranquility_annotation_selection", "tranquility_annotation", 
+                            "tranquility_view_notes"];
         for(var i=0; i < elems.length; i++) {
-            if(elems[i].getAttribute('class') === 'tranquility' ||
-               elems[i].getAttribute('class') === 'tranquility_annotation_note' ||
-               elems[i].getAttribute('class') === 'tranquility_annotation_text' ||
-               elems[i].getAttribute('class') === 'tranquility_annotation_selection' ||
-               elems[i].getAttribute('class') === 'tranquility_annotation' ||
-               elems[i].getAttribute('class') === 'tranquility_view_notes') {
+            if(include_tags.indexOf(elems[i].getAttribute('class')) != -1) {
                 elems[i].style.fontSize = this.prefs.getIntPref("defaultFontSize") + "px";
                 elems[i].style.fontFamily = this.prefs.getCharPref("defaultFont");
             }
@@ -1623,35 +1573,49 @@ var Tranquility = {
             var cdoc = gBrowser.browsers[j].contentDocument;
             if(cdoc.getElementById("tranquility_container")) {
                 var elems = cdoc.documentElement.getElementsByTagName("*");
-                if (aData == "useBackgroundImage") {
+                if (aData == "useBackgroundImage" || aData == "backgroundImageURL") {
                     if(this.prefs.getBoolPref("useBackgroundImage")) {
-                        cdoc.body.setAttribute('class', 'tranquility');
+                        Components.utils.import("resource://gre/modules/FileUtils.jsm");
+                        var file = new FileUtils.File(this.prefs.getCharPref("backgroundImageURL"));
+                        Tranquility.updateBodyCSS(true, file);
+
+                        var exclude_tags = ["tranquility_links", "tranquility_masker", "tranquility_menu", 
+                                            "tranquility_offline_links", "tranquility_annotation", 
+                                            "tranquility_annotation_selection"];
+                        
+                        for(var i=0; i < elems.length; i++) {
+                            if((elems[i].getAttribute('class')) && 
+                               (exclude_tags.indexOf(elems[i].getAttribute('class')) == -1) &&
+                               (elems[i].getAttribute('class').substr(0,11) === 'tranquility')) {
+                                elems[i].style.backgroundColor = 'transparent';
+                            }
+                        }
                     }
                     else {
-                        cdoc.body.setAttribute('class', 'tranquility-no-image');
-                    }  
+                        Tranquility.updateBodyCSS(false, null);
+                        // Toggle the custom backgroungColor option to enable it 
+                        var oldBGColor = this.prefs.getCharPref("backgroundColor");
+                        this.prefs.setCharPref("backgroundColor", "#000000");
+                        this.prefs.setCharPref("backgroundColor", oldBGColor);
+                    }
                 }
                 else if(aData == "defaultFont") {
                     var newFont = this.prefs.getCharPref("defaultFont");
+                    var include_tags = ["tranquility", "tranquility_annotation_note", "tranquility_annotation_text", 
+                                        "tranquility_annotation_selection", "tranquility_annotation", 
+                                        "tranquility_view_notes"];
                     for(var i=0; i < elems.length; i++) {
-                        if(elems[i].getAttribute('class') === 'tranquility' ||
-                           elems[i].getAttribute('class') === 'tranquility_annotation_note' ||
-                           elems[i].getAttribute('class') === 'tranquility_annotation_text' ||
-                           elems[i].getAttribute('class') === 'tranquility_annotation_selection' ||
-                           elems[i].getAttribute('class') === 'tranquility_annotation' ||
-                           elems[i].getAttribute('class') === 'tranquility_view_notes') 
+                        if(include_tags.indexOf(elems[i].getAttribute('class')) != -1) 
                             elems[i].style.fontFamily = newFont;
                     }   
                 }
                 else if(aData == "defaultFontSize") {
                     var newSize = this.prefs.getIntPref("defaultFontSize");
+                    var include_tags = ["tranquility", "tranquility_annotation_note", "tranquility_annotation_text", 
+                                        "tranquility_annotation_selection", "tranquility_annotation", 
+                                        "tranquility_view_notes"];
                     for(var i=0; i < elems.length; i++) {
-                        if(elems[i].getAttribute('class') === 'tranquility' ||
-                           elems[i].getAttribute('class') === 'tranquility_annotation_note' ||
-                           elems[i].getAttribute('class') === 'tranquility_annotation_text' ||
-                           elems[i].getAttribute('class') === 'tranquility_annotation_selection' ||
-                           elems[i].getAttribute('class') === 'tranquility_annotation' ||
-                           elems[i].getAttribute('class') === 'tranquility_view_notes')
+                        if(include_tags.indexOf(elems[i].getAttribute('class')) != -1) 
                             elems[i].style.fontSize = newSize + "px";
                     }   
                 }
@@ -1663,15 +1627,13 @@ var Tranquility = {
                     Tranquility.resizeImages(cdoc);
                 }
                 else if(aData == "defaultAlign") {
+                    var exclude_tags = ["tranquility_links", "tranquility_nav_links", "tranquility_more_links_btn", 
+                                        "tranquility_offline_links_btn", "tranquility_viewnotes_btn", 
+                                        "tranquility_read_later_btn"];
                     for(var i=0; i < elems.length; i++) {
                         if((elems[i].getAttribute('class')) && 
-                           (elems[i].getAttribute('class').substr(0,11) === 'tranquility') &&
-                           (elems[i].getAttribute('class') !== 'tranquility_links') &&
-                           (elems[i].getAttribute('class') !== 'tranquility_nav_links') &&
-                           (elems[i].getAttribute('class') !== 'tranquility_more_links_btn') &&
-                           (elems[i].getAttribute('class') !== 'tranquility_offline_links_btn') &&
-                           (elems[i].getAttribute('class') !== 'tranquility_viewnotes_btn') &&
-                           (elems[i].getAttribute('class') !== 'tranquility_read_later_btn')) {
+                           (exclude_tags.indexOf(elems[i].getAttribute('class')) == -1) &&
+                           (elems[i].getAttribute('class').substr(0,11) === 'tranquility')) {
                             elems[i].style.textAlign = this.prefs.getCharPref("defaultAlign");
                         }
                     }
@@ -1684,54 +1646,33 @@ var Tranquility = {
                         }
                     }   
                 }
-                else if((aData == "backgroundColor") || (aData == "useDefaultBackgroundColor")) {
-                    if(aData == "backgroundColor") { 
-                        this.prefs.setBoolPref("useDefaultBackgroundColor", false);
-                        this.prefs.setBoolPref("useBackgroundImage", false);
-                    }
+                else if(aData == "backgroundColor") {
+                    this.prefs.setBoolPref("useBackgroundImage", false);
                     var newBGColor = this.prefs.getCharPref("backgroundColor");
+                    var exclude_tags = ["tranquility_links", "tranquility_masker", 
+                                        "tranquility_annotation", "tranquility_annotation_selection"];
                     for(var i=0; i < elems.length; i++) {
                         if((elems[i].getAttribute('class')) && 
-                           (elems[i].getAttribute('class') != 'tranquility_links') &&
-                           (elems[i].getAttribute('class') != 'tranquility_masker') &&
+                           (exclude_tags.indexOf(elems[i].getAttribute('class')) == -1) &&
                            (elems[i].getAttribute('class').substr(0,11) === 'tranquility')) {
-                            if(this.prefs.getBoolPref("useDefaultBackgroundColor")) {
-                                elems[i].style.backgroundColor = "#FDFDFD";
-                            }
-                            else {
-                                elems[i].style.backgroundColor = newBGColor;
-                            }
+                            elems[i].style.backgroundColor = newBGColor;
                         }
                     }   
                 }
-                else if((aData == "fontColor") || (aData == "useDefaultFontColor")) {
-                    if(aData == "fontColor")
-                        this.prefs.setBoolPref("useDefaultFontColor", false);
+                else if(aData == "fontColor") {
                     var newFontColor = this.prefs.getCharPref("fontColor");
                     for(var i=0; i < elems.length; i++) {
                         if((elems[i].getAttribute('class')) && 
                            (elems[i].getAttribute('class').substr(0,11) === 'tranquility')) {
-                            if(this.prefs.getBoolPref("useDefaultFontColor")) {
-                                elems[i].style.color = "#000000";
-                            }
-                            else {
-                                elems[i].style.color = newFontColor;
-                            }
+                            elems[i].style.color = newFontColor;
                         }
                     }   
                 }
-                else if((aData == "linkColor") || (aData == "useDefaultLinkColor")) {
-                    if(aData == "linkColor")
-                        this.prefs.setBoolPref("useDefaultLinkColor", false);
+                else if(aData == "linkColor") {
                     var newLinkColor = this.prefs.getCharPref("linkColor");
                     for(var i=0; i < elems.length; i++) {
                         if(elems[i].tagName == 'A') { 
-                            if(this.prefs.getBoolPref("useDefaultLinkColor")) {
-                                elems[i].style.color = "#0000FF";
-                            }
-                            else {
-                                elems[i].style.color = newLinkColor;
-                            }
+                            elems[i].style.color = newLinkColor;
                         }
                     }   
                 }
@@ -1761,6 +1702,7 @@ var Tranquility = {
             delete Tranquility.gOrigDoc[url];
             delete Tranquility.gTranquilDoc[url];
             delete Tranquility.gOrigLinks[url];
+            delete Tranquility.gOrigZoom[url];
             delete Tranquility.gNavLinks[url];
             delete Tranquility.gDOMLoaded[url];
         }
@@ -1785,6 +1727,7 @@ var Tranquility = {
                 delete Tranquility.gOrigDoc[cachedURLs[i]];
                 delete Tranquility.gTranquilDoc[cachedURLs[i]];
                 delete Tranquility.gOrigLinks[cachedURLs[i]];
+                delete Tranquility.gOrigZoom[cachedURLs[i]];
                 delete Tranquility.gNavLinks[cachedURLs[i]];
                 delete Tranquility.gDOMLoaded[cachedURLs[i]];
             }
@@ -1796,6 +1739,17 @@ var Tranquility = {
   
         var thisURL = newTabBrowser.currentURI.spec;
         var contentDoc = newTabBrowser.contentDocument;
+        
+        // Handle corner case where the web page does not have any html content
+        // For example, the about:newtab page or some other page with only XML content
+        // In these cases, contentDoc.body does not exist; for this corner case,
+        // we exit without doing anything (nothing to save for later reading)
+        // This error was identified by Leszek Zyczkowski while reviewing version 1.1.9
+        //
+        if(contentDoc.body == undefined) {
+            return;
+        }
+        
         // If in tranquility view, then simply save content in DB
         if(contentDoc.getElementById('tranquility_container')) {
             Tranquility.saveContentOffline(thisURL);
@@ -1861,12 +1815,43 @@ var Tranquility = {
    
         var newTabBrowser = gBrowser.getBrowserForTab(gBrowser.selectedTab);
         var contentDoc = newTabBrowser.contentDocument;
-
+        
+        // Handle corner case where the web page does not have any html content
+        // For example, the about:newtab page or some other page with only XML content
+        // In these cases, contentDoc.body does not exist; for this corner case,
+        // we instead load a template html page in a new tab; switch to that tab
+        // and display the offline files list in that tab instead
+        // This error was identified by Leszek Zyczkowski while reviewing version 1.1.9
+        //
+        // As an additional cleanup/enhancement, if we are not in the tranquility mode,
+        // we will now open these offline content related links in a new tab
+        //
+        if((contentDoc.body == undefined) || 
+           (contentDoc.getElementById('tranquility_container') == undefined)) {
+            Tranquility.loadOfflineContentInNewTab();
+        }
+        else {
+            Tranquility.appendOfflineFileDetails(newTabBrowser, contentDoc);
+        }
+    },
+    
+    appendOfflineFileDetails: function(newTabBrowser, contentDoc) {
+            
         var strBundle = document.getElementById("tranquility-string-bundle");
         var dbOpenErrorString = strBundle.getString('dbOpenErrorString');
 
+        // Since we can display offline files even when not in tranquility mode
+        // check to see if masker div exists; if not, create it
+        var masker_div = contentDoc.getElementById('tranquility_masker');
+        if (masker_div == undefined) {
+            // Add the masking div for effects
+            var mdiv = contentDoc.createElement("DIV");
+            mdiv.setAttribute('class', 'tranquility_masker');
+            mdiv.setAttribute('id', 'tranquility_masker');
+            contentDoc.body.appendChild(mdiv);
+        }
+        
         var links_div = contentDoc.getElementById('tranquility_offline_links');
-    
         // If div exists, delete and recreate children from IndexedDB
         if(links_div) {
             while( links_div.hasChildNodes() ){
@@ -1995,7 +1980,8 @@ var Tranquility = {
                 var btn = contentDoc.getElementById('tranquility_offline_links_btn');
                 btn.setAttribute('data-active-link', thisURL);
                 Tranquility.addBackEventListeners(contentDoc);
-                Tranquility.gTranquilDoc[thisURL] = contentDoc.cloneNode(true);                
+                Tranquility.gTranquilDoc[thisURL] = contentDoc.cloneNode(true);
+                Tranquility.hideMenuDiv(contentDoc);
             };      
         };
     },
@@ -2044,6 +2030,24 @@ var Tranquility = {
         };
     },
 
+    loadOfflineContentInNewTab: function() {
+        var homeURL = "resource://tranquility/tranquility.html";
+        gBrowser.selectedTab = gBrowser.addTab(homeURL);
+        var newTabBrowser1 = gBrowser.getBrowserForTab(gBrowser.selectedTab);
+
+        // setTimeout is really a hack here; I need to use setInterval but it is
+        // raises a validation error.  Need to wait for the content to load and
+        // eventListeners are not reliable enough; sometimes, the event is completed
+        // before the code defining the eventLisntener is executed
+        //
+        setTimeout(function() {
+            var contentDoc = newTabBrowser1.contentDocument;
+            if (contentDoc.readyState === "complete") {
+                Tranquility.appendOfflineFileDetails(newTabBrowser1, contentDoc);
+            }
+        }, 500);
+
+    },
  
     addAnnotation: function(newTabBrowser) {
 
@@ -2229,33 +2233,62 @@ var Tranquility = {
         // Add back click event listener to body 
         cdoc.body.addEventListener("click", Tranquility.handleClickEvent, false);
 
-        // Add back click event listener to more links button
-        var links_button_div = cdoc.getElementById('tranquility_more_links_btn');
-        if(links_button_div != undefined)
-            links_button_div.addEventListener("click", Tranquility.handleClickEvent, false);
- 
-        // Add back click event listener to offline links button
-        var offlinefiles_button_div = cdoc.getElementById('tranquility_offline_links_btn');
-        if(offlinefiles_button_div != undefined)
-            offlinefiles_button_div.addEventListener("click", Tranquility.handleClickEvent, false);
-
-        // Add back click event listener to read later button
-        var readlater_button_div = cdoc.getElementById('tranquility_read_later_btn');
-        if(readlater_button_div != undefined)
-            readlater_button_div.addEventListener("click", Tranquility.handleClickEvent, false);
-       
-        // Add back click event listener to view notes button
-        var viewnotes_button_div = cdoc.getElementById('tranquility_viewnotes_btn');
-        if(viewnotes_button_div != undefined)
-            viewnotes_button_div.addEventListener("click", Tranquility.handleClickEvent, false);
-       
-        // Add back click event listener to dictionary iframe 
-        var dict_frame = cdoc.getElementById('tranquility_dictionary');
-        if(dict_frame != undefined)
-            dict_frame.addEventListener("click", Tranquility.handleClickEvent, false);
-            
+        var eventElements = ["tranquility_more_links_btn", "tranquility_offline_links_btn",
+                            "tranquility_read_later_btn", "tranquility_viewnotes_btn",
+                            "tranquility_dictionary"];
+                            
+        // Add back click event listener to each of the eventElements
+        for (var i=0; i < eventElements.length; i++) {
+            var thisElement = cdoc.getElementById(eventElements[i]);
+            if(thisElement != undefined)
+                thisElement.addEventListener("click", Tranquility.handleClickEvent, false);
+        }            
     },
 
+    // If a background image file is specified and enabled:
+    // (1) Open file as nsiFile
+    // (2) Create custom body css to use file as background
+    // (3) load/register the custom css uri
+    // (4) Else, use default background css
+    //
+    updateBodyCSS: function(imageOn, file) {
+        
+        var sss = Components.classes['@mozilla.org/content/style-sheet-service;1']
+                        .getService(Components.interfaces.nsIStyleSheetService);
+        var ios = Components.classes['@mozilla.org/network/io-service;1']
+                        .getService(Components.interfaces.nsIIOService);
+        if (!imageOn) {
+            if (Tranquility.currentBodyURI != null) {
+                sss.unregisterSheet(Tranquility.currentBodyURI, sss.USER_SHEET);
+                Tranquility.currentBodyURI = null;
+            }
+        }
+        else {
+            var fileSpec = 'resource://tranquility/tranquility.jpg';
+            if (file != null && file.exists()) {
+                var ios = Components.classes["@mozilla.org/network/io-service;1"].
+                            getService(Components.interfaces.nsIIOService);
+                fileSpec = ios.newFileURI(file).spec;
+            }
+            var css = " body.tranquility { background-image: url('" + fileSpec + "') !important;"
+                      + "background-attachment: fixed; background-size: contain !important; }";          
+            css += " body.tranquility-no-image { background-image: url('" + fileSpec + "') !important;"
+                      + "background-attachment: fixed; background-size: contain !important; }";          
+                      
+            // Create and load/register uri
+            var uri = ios.newURI('data:text/css,' + encodeURIComponent(css), null, null);
+        
+        
+            if (Tranquility.currentBodyURI != null) {
+                sss.unregisterSheet(Tranquility.currentBodyURI, sss.USER_SHEET);
+            }
+        
+            Tranquility.currentBodyURI = uri;
+            if (!sss.sheetRegistered(uri, sss.USER_SHEET)) {
+                sss.loadAndRegisterSheet(uri, sss.USER_SHEET);
+            }
+        }
+    },
     
     onUnload: function() {
 

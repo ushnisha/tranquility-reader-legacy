@@ -9,6 +9,8 @@
 <!ENTITY tranquility.fonts.label "Font Preferences">
 <!ENTITY tranquility.extras.label "Other Preferences">
 <!ENTITY backgroundimg.label "Enable Background Image">
+<!ENTITY tranquility.backgroundImageURL.label "Background Image URL:">
+<!ENTITY tranquility.backgroundImageURLSelect.label "Select">
 <!ENTITY tranquility.backgroundColor.label "Background Color:">
 <!ENTITY tranquility.defaultBackgroundColor.label "Use Default Background Color">
 <!ENTITY tranquility.fontColor.label "Font Color:">

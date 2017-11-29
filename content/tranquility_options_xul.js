@@ -3,6 +3,10 @@
                  .getService(Components.interfaces.nsIPrefService)
                  .getBranch("extensions.tranquility.");
 
+    // Populate background image file path
+    var imageFileName = document.getElementById("tranquility.backgroundImageFileName");
+    imageFileName.value = prefs.getCharPref("backgroundImageURL");
+    
     // Add system fonts to preferences
     var enumerator = Components.classes["@mozilla.org/gfx/fontenumerator;1"]
                       .getService(Components.interfaces.nsIFontEnumerator);
@@ -57,3 +61,22 @@
            wikilanglist.selectedItem = mitem;
         }
     }
+    
+    function pickLocalFile() {
+        const nsIFilePicker = Components.interfaces.nsIFilePicker;
+        var fp = Components.classes["@mozilla.org/filepicker;1"]
+                       .createInstance(nsIFilePicker);
+        fp.init(window, "Tranquility Background Image", nsIFilePicker.modeOpen);
+        fp.appendFilters(nsIFilePicker.filterImages);
+
+        var rv = fp.show();
+        if (rv == nsIFilePicker.returnOK || rv == nsIFilePicker.returnReplace) {
+            var file = fp.file;
+            // Get the path as string. Note that you usually won't 
+            // need to work with the string paths.
+            var path = fp.file.path;
+            imageFileName.value = path;
+            prefs.setCharPref("backgroundImageURL", path);
+        }
+    }
+
